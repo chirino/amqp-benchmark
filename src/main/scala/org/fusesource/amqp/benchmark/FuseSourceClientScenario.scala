@@ -328,7 +328,7 @@ class FuseSourceClientScenario extends Scenario {
     }
 
     def send_next:Unit = {
-      val message = sender.createMessage
+      val message = sender.getSession.createMessage
       message.setSettled(!sync_send)
       message.getHeader.setDurable(durable)
 
