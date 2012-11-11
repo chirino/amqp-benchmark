@@ -1,34 +1,60 @@
 # AMQP Benchmark
 
-A benchmarking tool for [AMQP](http://www.amqp.org) servers.
+A benchmarking tool for [AMQP 1.0](http://www.amqp.org/resources/specifications) servers.
+The benchmark covers a wide variety of common usage scenarios.
 
-## Build Prep
+<!--
+# Just looking for the Results?
 
-* Install [sbt](http://code.google.com/p/simple-build-tool/wiki/Setup) but instead 
-  of setting up the sbt script to use `sbt-launch.jar "$@"` please use `sbt-launch.jar "$*"` instead.
-  
-* run: `sbt update` in the stomp-benchmark project directory
+The numbers look different depending on the Hardware and OS they are run on:
+
+* [Amazon Linux: EC2 High-CPU Extra Large Instance](http://hiramchirino.com/stomp-benchmark/ec2-c1.xlarge/index.html)
+* [Ubuntu 11.10: Quad-Core 2600k Intel CPU (3.4 GHz)](http://hiramchirino.com/stomp-benchmark/ubuntu-2600k/index.html)
+* [OS X: 2 x Quad-Core Intel Xeon (3 GHz)](http://hiramchirino.com/stomp-benchmark/osx-8-core/index.html)
+-->
+
+## Servers Currently Benchmarked
+
+* Apache ActiveMQ
+* Apache ActiveMQ Apollo
+
+<!--
+* RabbitMQ
+* HornetQ
+-->
 
 ## Running the Benchmark
 
-The benchmark assumes that a AMQP 1.0 server is running on the local host on port 5671.
-Use the `sbt run` command to execute the benchmark.  Run `sbt run --help` to get a listing
-of all the command line arguments that the benchmark supports.
+Just run:
 
-For each broker you are benchmarking you will typically execute:
+    ./bin/benchmark-all
+    
+or one of the server specific benchmark scripts like:
 
-    sbt run reports/foo-3.2.json
+    ./bin/benchmark-activemq
 
-The benchmarking tool will then execute a large number of predefined 
-usage scenarios and gather the performance metrics for each.  Those metrics
-will get stored in a `reports/foo-3.2.json` file.  
+Tested to work on:
 
-## Updating the Report
+* Ubuntu 11.10
+* Amazon Linux
+* OS X
 
-The `reports/report.html` file can load and display the results of multiple benchmark runs.
-You can updated which benchmark results are displayed by the report.html by editing
-it and updating to the line which defines the `broker_files` variable (around line 32).
+The benchmark report will be stored in the `reports/$(hostname)` directory.
 
-    var broker_files = ['foo-3.2.json', 'cheese-1.0.json']
+## Running the Benchmark on an EC2 Amazon Linux 64 bit AMI
 
+If you want to run the benchmark on EC2, we recommend using at least the
+c1.xlarge instance type.  Once you have the instance started just execute
+the following commands on the instance:
 
+    sudo yum install -y screen
+    curl https://nodeload.github.com/chirino/amqp-benchmark/tarball/master | tar -zxv 
+    mv chirino-amqp-benchmark-* amqp-benchmark
+    screen ./amqp-benchmark/bin/benchmark-all
+
+The results will be stored in the ~/reports directory.
+
+## Running Custom Scenarios
+
+See the [custom-scenario.md ](https://github.com/chirino/amqp-benchmark/blob/master/custom-scenario.md) file for more information
+on how to configure other benchmarking scenarios.

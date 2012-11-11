@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# This shell script automates running the stomp-benchmark [1] against the
+# Apache ActiveMQ project [2].
+#
+# [1]: http://github.com/chirino/stomp-benchmark
+# [2]: http://activemq.apache.org
+#
+
+true \
+${ACTIVEMQ_VERSION:=5.6.0} \
+${ACTIVEMQ_DOWNLOAD:="http://archive.apache.org/dist/activemq/apache-activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz"}
+BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
+. ${BASEDIR}/bin/benchmark-setup
+
+function server_start() {
+	ACTIVEMQ_HOME="${WORKSPACE}/apache-activemq-${ACTIVEMQ_VERSION}"
+
+	if [ ! -d "${ACTIVEMQ_HOME}" ]; then
+	  cd "${WORKSPACE}"
+	  wget "$ACTIVEMQ_DOWNLOAD"
+	  tar -zxvf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
+	  rm -rf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
+	fi	
+
+	# Cleanup preious executions.
+	server_stop
+	rm -rf ${ACTIVEMQ_HOME}/data/*
+
+	#
+	# Configuration
+	export ACTIVEMQ_OPTS="-Xmx4G -Xms1G -Dorg.apache.activemq.UseDedicatedTaskRunner=true -Djava.util.logging.config.file=logging.properties"
+
+	CONSOLE_LOG="${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.log"
+	"${ACTIVEMQ_HOME}/bin/activemq" console "xbean:file:${ACTIVEMQ_HOME}/conf/activemq-stomp.xml" > "${CONSOLE_LOG}" 2>&1 &
+	ACTIVEMQ_PID=$!
+	echo "Started ActiveMQ with PID: ${ACTIVEMQ_PID}"
+	sleep 5
+	cat ${CONSOLE_LOG}
+}
+
+function benchmark_run() {
+	cd "${BASEDIR}"
+	echo "${WORKSPACE}/bin/sbt" run --host $1 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
+	"${WORKSPACE}/bin/sbt" run --host $1 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
+	# Create a report.
+	"${BASEDIR}/bin/benchmark-report" $*
+}
+
+benchmark_main $*
+
+

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2011 the original author or authors.
+ * Copyright (C) 2009-2012 the original author or authors.
  * See the notice.md file distributed with this work for additional
  * information regarding copyright ownership.
  *
@@ -17,22 +17,22 @@
  */
 package org.fusesource.amqp.benchmark
 
-import java.io._
 import org.fusesource.hawtdispatch._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
-import org.fusesource.fabric.apollo.amqp.api._
-import org.fusesource.fabric.apollo.amqp.codec.types.TypeFactory._
 import org.fusesource.hawtbuf.Buffer._
+import org.apache.activemq.apollo.amqp.hawtdispatch.api._
+import org.apache.qpid.proton.`type`.messaging.{ApplicationProperties, Target, Source}
+import org.apache.qpid.proton.`type`.transport.DeliveryState
 
 /**
  * <p>
- * Simulates load on the an AMQP sever using the FuseSource
- * AMQP client library.
+ * Simulates load on the an AMQP sever using the
+ * Proton based client lib.
  * </p>
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-class FuseSourceClientScenario extends Scenario {
+class ProtonScenario extends Scenario {
 
   def createProducer(i:Int) = {
     new ProducerClient(i)
@@ -43,9 +43,8 @@ class FuseSourceClientScenario extends Scenario {
 
   trait FuseSourceClient extends Client {
 
-    var connection = AmqpConnectionFactory.create
-
-    def queue = connection.getDispatchQueue
+    var connection:AmqpConnection = _
+    val queue = createQueue()
 
     var message_counter=0L
     var reconnect_delay = 0L
@@ -55,26 +54,33 @@ class FuseSourceClientScenario extends Scenario {
     case class INIT() extends State
 
 
-
     case class CONNECTING(host: String, port: Int, on_complete: ()=>Unit) extends State {
 
-
       def connect() = {
-        connection = AmqpConnectionFactory.create
-        connection.setOnClose(^{on_close})
-        connection.connect("tcp://" + host + ":" + port, ^ {
-          if ( this == state ) {
-            if(done.get) {
-              close
-            } else {
-              if( connection.connected ) {
+        val options = new AmqpConnectOptions();
+        options.setDispatchQueue(queue)
+        options.setHost(host, port)
+        for ( x <- login ) { options.setUser( x )}
+        for ( x <- passcode ) { options.setPassword( x )}
+        connection = AmqpConnection.create(options)
+        connection.onConnected(new Callback[Void] {
+          def onSuccess(value: Void) {
+            if ( CONNECTING.this == state ) {
+              if(done.get) {
+                close
+              } else {
                 state = CONNECTED()
                 on_complete()
-              } else {
-                on_failure(connection.error)
               }
             }
           }
+          def onFailure(value: Throwable) {
+            on_failure(value)
+          }
+        })
+        connection.onTransportFailure(new Callback[Throwable] {
+          def onFailure(value: Throwable) = on_failure(value)
+          def onSuccess(value: Throwable) = on_failure(value)
         })
 
         // Times out the connect after 5 seconds...
@@ -98,7 +104,7 @@ class FuseSourceClientScenario extends Scenario {
       }
 
       def close() = {
-        if( connection.connected ) {
+        if( connection.getTransportState == CONNECTED ) {
           connection.close
           state = CLOSING()
         } else {
@@ -120,7 +126,7 @@ class FuseSourceClientScenario extends Scenario {
     case class CONNECTED() extends State {
 
       def close() = {
-        if( connection.connected ) {
+        if( connection.getTransportState == CONNECTED ) {
           connection.close
           state = CLOSING()
         } else {
@@ -157,10 +163,10 @@ class FuseSourceClientScenario extends Scenario {
       if( done.get ) {
         has_shutdown.countDown
       } else {
-        if( connection.error !=null ) {
+        if( connection.getTransportFailure()!=null ) {
           state match {
-            case x:CONNECTING => x.on_failure(connection.error)
-            case x:CONNECTED => x.on_failure(connection.error)
+            case x:CONNECTING => x.on_failure(connection.getTransportFailure)
+            case x:CONNECTED => x.on_failure(connection.getTransportFailure)
             case _ =>
           }
         } else {
@@ -217,88 +223,48 @@ class FuseSourceClientScenario extends Scenario {
 
     def name:String
   }
+  var qos:QoS = QoS.AT_MOST_ONCE
+  var prefetch = 100
 
   class ConsumerClient(val id: Int) extends FuseSourceClient {
     val name: String = "consumer " + id
     queue.setLabel(name)
 
-    var session:Session = _
-    var receiver:Receiver = _
+    var session:AmqpSession = _
+    var receiver:AmqpReceiver = _
 
     override def reconnect_action = {
       connect {
         session = connection.createSession
-        session.begin(^{
-//          println(name+" session created")
-
-          receiver = session.createReceiver
-          receiver.setName(name+" - receiver")
-          receiver.setAddress(destination(id))
-          receiver.setListener(new MessageListener {
-
-            if (consumer_sleep != 0) {
-              queue.after(1, TimeUnit.SECONDS) {
-                receiver.addLinkCredit(10)
-              }
-            }
-
-            var sleeping = false
-            var _refiller = ^{}
-
-            def needLinkCredit(available: Long) = {
-              if (consumer_sleep != 0) {
-                0
-              } else {
-                available.max(20)
-              }
-            }
-
-            def refiller(refiller: Runnable) = _refiller = refiller
-
-            def full = sleeping
-            def offer(receiver: Receiver, message: Message) = {
-
-              if( sleeping ) {
+        val link_name = destination(id)+" => "+name
+        val source = new Source
+        source.setAddress(destination(id))
+        receiver = session.createReceiver(source, qos, prefetch, link_name)
+        receiver.setDeliveryListener(new AmqpDeliveryListener(){
+          var sleeping = false
+          def offer(delivery: MessageDelivery): Boolean = {
+            if( sleeping ) {
+              false
+            } else {
+              val c_sleep = consumer_sleep
+              if( c_sleep != 0 ) {
+                sleeping = true
+                queue.after(math.abs(c_sleep), TimeUnit.MILLISECONDS) {
+                  sleeping = false
+                  consumer_counter.incrementAndGet()
+                  delivery.settle()
+                }
                 false
               } else {
-
-                def settle = {
-                  if ( !message.getSettled ) {
-                    receiver.settle(message, Outcome.ACCEPTED)
-                  }
-                }
-
-                val c_sleep = consumer_sleep
-                if( c_sleep != 0 ) {
-                  sleeping = true
-                  queue.after(math.abs(c_sleep), TimeUnit.MILLISECONDS) {
-                    sleeping = false
-                    settle
-                    receiver.addLinkCredit(1)
-                    _refiller.run
-                  }
-                } else {
-                  val available = receiver.getAvailableLinkCredit
-                  if (available != null && available.longValue < 5) {
-                    receiver.addLinkCredit(20 - available.longValue)
-                  }
-                  settle
-                }
-
                 consumer_counter.incrementAndGet()
+                delivery.settle()
                 true
               }
             }
-          })
-          receiver.attach(^{
-//            println(name+" receiver attached")
-
-          })
+          }
         })
       }
     }
-
-
   }
 
   class ProducerClient(val id: Int) extends FuseSourceClient {
@@ -306,43 +272,24 @@ class FuseSourceClientScenario extends Scenario {
     val name: String = "producer " + id
     queue.setLabel(name)
 
-    var session:Session = _
-    var sender:Sender = _
+    var session:AmqpSession = _
+    var sender:AmqpSender = _
+    val data = ascii(body(name));
 
     override def reconnect_action = {
       connect {
         session = connection.createSession
-        session.begin(^ {
-
-//          println(name+" session created..")
-          sender = session.createSender
-          sender.setName(name + "sender")
-          sender.setAddress(destination(id))
-          sender.attach(^{
-//            println(name+" sender created..")
-            send_next
-          })
-        })
-
+        val link_name = name+" => "+destination(id)
+        val target = new Target
+        target.setAddress(destination(id))
+        sender = session.createSender(target, qos, link_name)
       }
     }
 
+
     def send_next:Unit = {
-      val message = sender.getSession.createMessage
-      message.setSettled(!sync_send)
-      message.getHeader.setDurable(durable)
-
-      if( !headers.isEmpty ) {
-        val attrs = createAmqpMessageAttributes
-        headers_for(id).foreach { case (key,value) =>
-          attrs.put(createAmqpSymbol(key), createAmqpString(value))
-        }
-        message.getHeader.setMessageAttrs(attrs)
-      }
-
-      message.addBodyPart(ascii(body(name)))
-
-
+      val message = session.createBinaryMessage(data.data, data.offset, data.length);
+      message.setDurable(durable)
 
       def send_completed:Unit = {
         message_counter += 1
@@ -368,25 +315,16 @@ class FuseSourceClientScenario extends Scenario {
       }
 
       def send:Unit = if( !done.get) {
-        if( sync_send ) {
-          message.onAck(^ {
-            message.getOutcome match {
-              case Outcome.ACCEPTED =>
-                send_completed
-
-              case _ =>
-                // try again...
-                message.setSettled(false)
-                send
-            }
-          })
-
-        } else {
-          message.onSend(^{
+        val md = sender.send(message)
+        md.onSettle(new Callback[DeliveryState] {
+          def onFailure(value: Throwable) {
+            value.printStackTrace()
+            close
+          }
+          def onSuccess(value: DeliveryState) {
             send_completed
-          })
-        }
-        sender.put(message)
+          }
+        })
       }
 
       if( !done.get ) {
