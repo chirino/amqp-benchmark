@@ -89,7 +89,7 @@ trait Scenario {
   var sample_interval = 1000
   var protocol = "tcp"
   var host = "127.0.0.1"
-  var port = 61613
+  var port = 5672
   var buffer_size = 32*1024
   
   private var _message_size: { def apply(): Int; def init(time: Long) } = new { def apply() = 1024; def init(time: Long) {}  }

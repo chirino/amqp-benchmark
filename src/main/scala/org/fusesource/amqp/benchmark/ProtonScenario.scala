@@ -31,16 +31,17 @@ object ProtonScenario {
     val scenario = new ProtonScenario
     def r(p:Int, d:Int, c:Int) = { scenario.producers = p; scenario.destination_count = d; scenario.consumers = c; scenario.run}
     scenario.host = "localhost"
-    scenario.port = 61613
+//    scenario.port = 61613
     scenario.display_errors = true
 //    scenario.login = Some("admin")
 //    scenario.passcode = Some("password")
     scenario.destination_type = "queue";
-//    scenario.producer_qos = "AT_MOST_ONCE"
-//    scenario.consumer_qos = "AT_MOST_ONCE"
-    scenario.producer_qos = "AT_LEAST_ONCE"
-    scenario.consumer_qos = "AT_LEAST_ONCE"
-    scenario.message_size = 4*1024
+    scenario.producer_qos = "AT_MOST_ONCE"
+    scenario.consumer_qos = "AT_MOST_ONCE"
+//    scenario.producer_qos = "AT_LEAST_ONCE"
+//    scenario.consumer_qos = "AT_LEAST_ONCE"
+//    scenario.consumer_prefetch = 1
+    scenario.message_size = 20
     scenario.trace = false
     r(1,1,1)
   }
@@ -358,7 +359,6 @@ class ProtonScenario extends Scenario {
             close
           }
           def onSuccess(value: DeliveryState) {
-//            System.out.println("sent done.")
             send_completed
           }
         })
