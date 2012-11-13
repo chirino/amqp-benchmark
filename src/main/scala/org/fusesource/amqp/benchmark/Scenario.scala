@@ -25,6 +25,7 @@ import java.security.KeyStore
 import java.io.FileInputStream
 import javax.net.ssl._
 import org.fusesource.hawtdispatch.transport.{SslTransport, TcpTransport}
+import org.apache.activemq.apollo.amqp.hawtdispatch.api.QoS
 
 object Scenario {
   val MESSAGE_ID:Array[Byte] = "message-id"
@@ -79,6 +80,8 @@ trait Scenario {
 
   var producers = 1
   var producers_per_sample = 0
+  var producer_qos = "AT_LEAST_ONCE"
+
   var max_concurrent_connects = 100
 
   var consumers = 1
@@ -96,12 +99,13 @@ trait Scenario {
 
   var persistent = false
   var persistent_header = "persistent:true"
-  var sync_send = false
   var subscribe_headers = Array[Array[String]]()
   var ack = "auto"
   var selector:String = null
   var durable = false
   var consumer_prefix = "consumer-"
+  var consumer_qos = "AT_LEAST_ONCE"
+  var consumer_prefetch = 100
 
   var consumer_sleep_modulo = 1
   var producer_sleep_modulo = 1
@@ -292,7 +296,7 @@ trait Scenario {
     "  producers             = "+producers+"\n"+
     "  message_size          = "+message_size+"\n"+
     "  persistent            = "+persistent+"\n"+
-    "  sync_send             = "+sync_send+"\n"+
+    "  producer qos          = "+producer_qos+"\n"+
     "  producer_sleep (ms)   = "+producer_sleep+"\n"+
     "  \n"+
     "  --- Consumer Properties ---\n"+
@@ -321,11 +325,12 @@ trait Scenario {
     s :+= ("producers", producers.toString)
     s :+= ("message_size", message_size.toString)
     s :+= ("persistent", persistent.toString)
-    s :+= ("sync_send", sync_send.toString)
+    s :+= ("producer_qos", producer_qos)
     s :+= ("producer_sleep", producer_sleep.toString)
     s :+= ("subscribe_headers", subscribe_headers.map( _.mkString(", ") ).mkString("(", "), (", ")"))
     s :+= ("consumers", consumers.toString)
     s :+= ("consumer_sleep", consumer_sleep.toString)
+    s :+= ("consumer_qos", consumer_qos)
     s :+= ("ack", ack)
     s :+= ("selector", selector)
     s :+= ("durable", durable.toString)

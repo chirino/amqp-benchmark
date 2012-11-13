@@ -9,9 +9,8 @@ class BenchmarkProject(info: ProjectInfo) extends DefaultProject(info) {
   
   lazy val karaf_console = "org.apache.karaf.shell" % "org.apache.karaf.shell.console" % "2.2.1"
   lazy val slf4j_nop = "org.slf4j" % "slf4j-nop" % "1.6.0"
-  lazy val amqp_protocol = "org.fusesource.fabric.apollo" % "fabric-apollo-amqp-protocol" % "1.0-SNAPSHOT"
-  lazy val amqp_codec = "org.fusesource.fabric.apollo" % "fabric-apollo-amqp-codec" % "1.0-SNAPSHOT"
   lazy val hawtdispatch = "org.fusesource.hawtdispatch" % "hawtdispatch-scala" % "1.12"
+  lazy val apollo_amqp = "org.apache.activemq" % "apollo-amqp" % "99-trunk-SNAPSHOT"
   lazy val jackson_core_asl = "org.codehaus.jackson" % "jackson-core-asl" % "1.9.2"
   lazy val jackson_mapper_asl = "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.2"
   lazy val commons_math = "org.apache.commons" % "commons-math" % "2.2"

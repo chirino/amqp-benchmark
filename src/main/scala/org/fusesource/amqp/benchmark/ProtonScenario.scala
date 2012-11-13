@@ -23,6 +23,28 @@ import org.fusesource.hawtbuf.Buffer._
 import org.apache.activemq.apollo.amqp.hawtdispatch.api._
 import org.apache.qpid.proton.`type`.messaging.{ApplicationProperties, Target, Source}
 import org.apache.qpid.proton.`type`.transport.DeliveryState
+import org.apache.qpid.proton.engine.impl.ProtocolTracer
+import org.apache.qpid.proton.framing.TransportFrame
+
+object ProtonScenario {
+  def main(args: Array[String]) {
+    val scenario = new ProtonScenario
+    def r(p:Int, d:Int, c:Int) = { scenario.producers = p; scenario.destination_count = d; scenario.consumers = c; scenario.run}
+    scenario.host = "localhost"
+    scenario.port = 61613
+    scenario.display_errors = true
+//    scenario.login = Some("admin")
+//    scenario.passcode = Some("password")
+    scenario.destination_type = "queue";
+//    scenario.producer_qos = "AT_MOST_ONCE"
+//    scenario.consumer_qos = "AT_MOST_ONCE"
+    scenario.producer_qos = "AT_LEAST_ONCE"
+    scenario.consumer_qos = "AT_LEAST_ONCE"
+    scenario.message_size = 4*1024
+    scenario.trace = false
+    r(1,1,1)
+  }
+}
 
 /**
  * <p>
@@ -40,6 +62,7 @@ class ProtonScenario extends Scenario {
   def createConsumer(i:Int) = {
     new ConsumerClient(i)
   }
+  var trace = false
 
   trait FuseSourceClient extends Client {
 
@@ -48,6 +71,7 @@ class ProtonScenario extends Scenario {
 
     var message_counter=0L
     var reconnect_delay = 0L
+    def id:Int
 
     sealed trait State
 
@@ -62,7 +86,17 @@ class ProtonScenario extends Scenario {
         options.setHost(host, port)
         for ( x <- login ) { options.setUser( x )}
         for ( x <- passcode ) { options.setPassword( x )}
-        connection = AmqpConnection.create(options)
+        connection = AmqpConnection.connect(options)
+        if( trace ) {
+          connection.setProtocolTracer(new ProtocolTracer() {
+            def receivedFrame(transportFrame: TransportFrame) = {
+               println("%11.11s | RECV | %s".format(name, transportFrame.getBody()));
+             }
+             def sentFrame(transportFrame: TransportFrame) = {
+               println("%11.11s | SEND | %s".format(name, transportFrame.getBody()));
+             }
+          });
+        }
         connection.onConnected(new Callback[Void] {
           def onSuccess(value: Void) {
             if ( CONNECTING.this == state ) {
@@ -223,8 +257,6 @@ class ProtonScenario extends Scenario {
 
     def name:String
   }
-  var qos:QoS = QoS.AT_MOST_ONCE
-  var prefetch = 100
 
   class ConsumerClient(val id: Int) extends FuseSourceClient {
     val name: String = "consumer " + id
@@ -232,6 +264,7 @@ class ProtonScenario extends Scenario {
 
     var session:AmqpSession = _
     var receiver:AmqpReceiver = _
+    val qos = QoS.valueOf(producer_qos)
 
     override def reconnect_action = {
       connect {
@@ -239,26 +272,27 @@ class ProtonScenario extends Scenario {
         val link_name = destination(id)+" => "+name
         val source = new Source
         source.setAddress(destination(id))
-        receiver = session.createReceiver(source, qos, prefetch, link_name)
+        receiver = session.createReceiver(source, qos, consumer_prefetch, link_name)
+        receiver.resume()
         receiver.setDeliveryListener(new AmqpDeliveryListener(){
           var sleeping = false
-          def offer(delivery: MessageDelivery): Boolean = {
+          def onMessageDelivery(delivery: MessageDelivery) = {
             if( sleeping ) {
-              false
+              throw new IllegalStateException("Got delivery while suspended.")
             } else {
               val c_sleep = consumer_sleep
               if( c_sleep != 0 ) {
+                receiver.suspend()
                 sleeping = true
                 queue.after(math.abs(c_sleep), TimeUnit.MILLISECONDS) {
+                  receiver.resume()
                   sleeping = false
                   consumer_counter.incrementAndGet()
                   delivery.settle()
                 }
-                false
               } else {
                 consumer_counter.incrementAndGet()
                 delivery.settle()
-                true
               }
             }
           }
@@ -275,6 +309,7 @@ class ProtonScenario extends Scenario {
     var session:AmqpSession = _
     var sender:AmqpSender = _
     val data = ascii(body(name));
+    val qos = QoS.valueOf(producer_qos)
 
     override def reconnect_action = {
       connect {
@@ -283,6 +318,7 @@ class ProtonScenario extends Scenario {
         val target = new Target
         target.setAddress(destination(id))
         sender = session.createSender(target, qos, link_name)
+        send_next
       }
     }
 
@@ -322,6 +358,7 @@ class ProtonScenario extends Scenario {
             close
           }
           def onSuccess(value: DeliveryState) {
+//            System.out.println("sent done.")
             send_completed
           }
         })

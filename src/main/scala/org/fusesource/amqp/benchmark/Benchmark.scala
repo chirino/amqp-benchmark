@@ -556,7 +556,6 @@ class Benchmark extends Action {
           scenario.producers_per_sample = scenario_connection_scale_rate.get
           scenario.producer_sleep = 1000
           scenario.persistent = false
-          scenario.sync_send = false
           scenario.destination_count = 1
           scenario.destination_type = "topic"
           scenario.consumers = 1
@@ -564,60 +563,60 @@ class Benchmark extends Action {
       }
     }
     
-    if( enable_persistence.get && scenario_queue_loading.get ) {
-      for( persistent <- List(false, true)) {
-        val size = 20
-
-        // Benchmark queue loading
-        val name = "%s_1%s%s_1queue_0".format(mlabel(size), plabel(persistent), slabel(persistent))
-        benchmark(name, false, 30) { g=>
-          g.message_size = 20
-          g.producers = 1
-          g.sync_send = persistent
-          g.persistent = persistent
-          g.destination_count = 1
-          g.destination_type = "queue"
-          g.consumers = 0
-          g.destination_name = "load_me_up"
-        }
-
-        // Benchmark unloading
-        if(persistent) {
-          val name = "%s_0_1queue_1".format(mlabel(size))
-          benchmark(name, true, 30) { g=>
-            g.producers = 0
-            g.destination_count = 1
-            g.destination_type = "queue"
-            g.consumers = 1
-            g.destination_name = "load_me_up"
-          }
-        }
-
-      }
-    }    
-
-    // Setup a scenario /w fast and slow consumers
-    if(scenario_slow_consumer.get) {
-      for( dt <- destination_types) {
-        multi_benchmark(List("20b_1a_1%s_1fast".format(dt), "20b_0_1%s_1slow".format(dt))) {
-          case List(fast:Scenario, slow:Scenario) =>
-            fast.message_size = 20
-            fast.producers = 1
-            fast.persistent = false
-            fast.sync_send = false
-            fast.destination_count = 1
-            fast.destination_type = dt
-            fast.consumers = 1
-
-            slow.producers = 0
-            slow.destination_count = 1
-            slow.destination_type = dt
-            slow.consumer_sleep = 100 // He can only process 10 /sec
-            slow.consumers = 1
-          case _ =>
-        }
-      }
-    }
+//    if( enable_persistence.get && scenario_queue_loading.get ) {
+//      for( persistent <- List(false, true)) {
+//        val size = 20
+//
+//        // Benchmark queue loading
+//        val name = "%s_1%s%s_1queue_0".format(mlabel(size), plabel(persistent), slabel(persistent))
+//        benchmark(name, false, 30) { g=>
+//          g.message_size = 20
+//          g.producers = 1
+//          g.sync_send = persistent
+//          g.persistent = persistent
+//          g.destination_count = 1
+//          g.destination_type = "queue"
+//          g.consumers = 0
+//          g.destination_name = "load_me_up"
+//        }
+//
+//        // Benchmark unloading
+//        if(persistent) {
+//          val name = "%s_0_1queue_1".format(mlabel(size))
+//          benchmark(name, true, 30) { g=>
+//            g.producers = 0
+//            g.destination_count = 1
+//            g.destination_type = "queue"
+//            g.consumers = 1
+//            g.destination_name = "load_me_up"
+//          }
+//        }
+//
+//      }
+//    }
+//
+//    // Setup a scenario /w fast and slow consumers
+//    if(scenario_slow_consumer.get) {
+//      for( dt <- destination_types) {
+//        multi_benchmark(List("20b_1a_1%s_1fast".format(dt), "20b_0_1%s_1slow".format(dt))) {
+//          case List(fast:Scenario, slow:Scenario) =>
+//            fast.message_size = 20
+//            fast.producers = 1
+//            fast.persistent = false
+//            fast.sync_send = false
+//            fast.destination_count = 1
+//            fast.destination_type = dt
+//            fast.consumers = 1
+//
+//            slow.producers = 0
+//            slow.destination_count = 1
+//            slow.destination_type = dt
+//            slow.consumer_sleep = 100 // He can only process 10 /sec
+//            slow.consumers = 1
+//          case _ =>
+//        }
+//      }
+//    }
 
 //    // Setup selecting consumers on 1 destination.
 //    if( scenario_selector.get ) {
@@ -648,78 +647,78 @@ class Benchmark extends Action {
 //      }
 //    }
 
-    if( enable_topics.get && scenario_producer_throughput.get ) {
-      // Benchmark for figuring out the max producer throughput
-      for( size <- List(20, 1024, 1024 * 256) ) {
-        val name = "%s_1a_1topic_0".format(mlabel(size))
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = 1
-          g.persistent = false
-          g.sync_send = false
-          g.destination_count = 1
-          g.destination_type = "topic"
-          g.consumers = 0
-        }
-      }
-    }
-
-    // Benchmark for the queue parallel load scenario
-    if( scenario_partitioned.get ) {
-
-      val message_sizes = List(20, 1024, 1024 * 256)
-      val destinations = List(1, 5, 10)
-
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
-        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = load
-          g.persistent = persistent
-          g.sync_send = persistent
-          g.destination_count = load
-          g.destination_type = destination_type
-          g.consumers = load
-        }
-      }
-    }
-
-    if( scenario_fan_in_out.get  ) {
-      val client_count = List(1, 5, 10)
-      val message_sizes = List(20)
-      
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
-        if( !(consumers == 1 && producers == 1) ) {
-          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
-          benchmark(name) { g=>
-            g.message_size = size
-            g.producers = producers
-            g.persistent = persistent
-            g.sync_send = persistent
-            g.destination_count = 1
-            g.destination_type = destination_type
-            g.consumers = consumers
-          }
-        }
-      }
-    }
-
-    if( enable_topics.get && scenario_durable_subs.get) {
-      // Benchmark for durable subscriptions on topics
-      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
-        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = 1
-          g.persistent = persistent
-          g.sync_send = persistent
-          g.destination_count = 1
-          g.destination_type = "topic"
-          g.consumers = load
-          g.durable = true
-        }
-      }
-    }
+//    if( enable_topics.get && scenario_producer_throughput.get ) {
+//      // Benchmark for figuring out the max producer throughput
+//      for( size <- List(20, 1024, 1024 * 256) ) {
+//        val name = "%s_1a_1topic_0".format(mlabel(size))
+//        benchmark(name) { g=>
+//          g.message_size = size
+//          g.producers = 1
+//          g.persistent = false
+//          g.sync_send = false
+//          g.destination_count = 1
+//          g.destination_type = "topic"
+//          g.consumers = 0
+//        }
+//      }
+//    }
+//
+//    // Benchmark for the queue parallel load scenario
+//    if( scenario_partitioned.get ) {
+//
+//      val message_sizes = List(20, 1024, 1024 * 256)
+//      val destinations = List(1, 5, 10)
+//
+//      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
+//        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
+//        benchmark(name) { g=>
+//          g.message_size = size
+//          g.producers = load
+//          g.persistent = persistent
+//          g.sync_send = persistent
+//          g.destination_count = load
+//          g.destination_type = destination_type
+//          g.consumers = load
+//        }
+//      }
+//    }
+//
+//    if( scenario_fan_in_out.get  ) {
+//      val client_count = List(1, 5, 10)
+//      val message_sizes = List(20)
+//
+//      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
+//        if( !(consumers == 1 && producers == 1) ) {
+//          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
+//          benchmark(name) { g=>
+//            g.message_size = size
+//            g.producers = producers
+//            g.persistent = persistent
+//            g.sync_send = persistent
+//            g.destination_count = 1
+//            g.destination_type = destination_type
+//            g.consumers = consumers
+//          }
+//        }
+//      }
+//    }
+//
+//    if( enable_topics.get && scenario_durable_subs.get) {
+//      // Benchmark for durable subscriptions on topics
+//      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
+//        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
+//        benchmark(name) { g=>
+//          g.message_size = size
+//          g.producers = 1
+//          g.persistent = persistent
+//          g.sync_send = persistent
+//          g.destination_count = 1
+//          g.destination_type = "topic"
+//          g.consumers = load
+//          g.durable = true
+//        }
+//      }
+//    }
 
   }
 
@@ -737,7 +736,9 @@ class Benchmark extends Action {
     var drain = FlexibleProperty[Boolean](default = Some(false))
     var persistent = FlexibleProperty[Boolean]()
     var durable = FlexibleProperty[Boolean]()
-    var sync_send = FlexibleProperty[Boolean]()
+    var producer_qos = FlexibleProperty[String]()
+    var consumer_qos = FlexibleProperty[String]()
+    var consumer_prefetch = FlexibleProperty[Int]()
 
     var ack = FlexibleProperty[String]()
     
@@ -878,12 +879,14 @@ class Benchmark extends Action {
       drain_timeout.push(getIntValue("drain_timeout", node, vars).map(_.toLong))
       persistent.push(getBooleanValue("persistent", node, vars))
       durable.push(getBooleanValue("durable", node, vars))
-      sync_send.push(getBooleanValue("sync_send", node, vars))
+      producer_qos.push(getStringValue("producer_qos", node, vars))
       ack.push(getStringValue("ack", node, vars))
       max_concurrent_connects.push(getIntValue("max_concurrent_connects", node, vars))
       producers_per_sample.push(getIntValue("producers_per_sample", node, vars))
       consumers_per_sample.push(getIntValue("consumers_per_sample", node, vars))
-      
+      consumer_qos.push(getStringValue("consumer_qos", node, vars))
+      consumer_prefetch.push(getIntValue("consumer_prefetch", node, vars))
+
       headers.push(getPropertyHeaders("headers", node, vars))
       selector.push(getStringValue("selector", node, vars))
 
@@ -917,13 +920,15 @@ class Benchmark extends Action {
       drain_timeout.pop()
       persistent.pop()
       durable.pop()
-      sync_send.pop()
+      producer_qos.pop()
       ack.pop()
       messages_per_connection.pop()
       max_concurrent_connects.pop()
       producers_per_sample.pop()
       consumers_per_sample.pop()
-      
+      consumer_qos.pop()
+      consumer_prefetch.pop()
+
       headers.pop()
       selector.pop()
       
@@ -1075,12 +1080,14 @@ class Benchmark extends Action {
               scenario.drain_timeout = drain_timeout.getOrElse(scenario.drain_timeout)
               scenario.persistent = persistent.getOrElse(scenario.persistent)
               scenario.durable = durable.getOrElse(scenario.durable)
-              scenario.sync_send = sync_send.getOrElse(scenario.sync_send)
+              scenario.producer_qos = producer_qos.getOrElse(scenario.producer_qos)
               scenario.ack = ack.getOrElse(scenario.ack)
               scenario.max_concurrent_connects = max_concurrent_connects.getOrElse(scenario.max_concurrent_connects)
               scenario.producers_per_sample = producers_per_sample.getOrElse(scenario.producers_per_sample)
               scenario.consumers_per_sample = consumers_per_sample.getOrElse(scenario.consumers_per_sample)
-              
+              scenario.consumer_qos = consumer_qos.getOrElse(scenario.consumer_qos)
+              scenario.consumer_prefetch = consumer_prefetch.getOrElse(scenario.consumer_prefetch)
+
 //              scenario.headers = headers.get
               scenario.selector = selector.getOrElse(scenario.selector)
                 
