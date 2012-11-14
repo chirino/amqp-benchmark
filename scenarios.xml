@@ -32,18 +32,18 @@
     </common>
     <loop>
       <var name="persistent" label="Message Persistence">
-        <value label="persistent">true</value>
-        <value label="non-persistent">false</value>
+        <value label="Persistent">true</value>
+        <value label="Non-Persistent">false</value>
       </var>
       <var name="size" label="Message Size">
-        <value label="20 bytes">20</value>
+        <value label="20 Bytes">20</value>
         <value label="1k">1024</value>
         <!-- <value label="100k">102400</value> -->
       </var>
       <var name="qos" label="Delivery QoS">
-        <value>AT_MOST_ONCE</value>
-        <value>AT_LEAST_ONCE</value>
-        <!-- <value>EXACTLY_ONCE</value> -->
+        <value label="At Most Once">AT_MOST_ONCE</value>
+        <value label="At Least Once">AT_LEAST_ONCE</value>
+        <!-- <value label="Exactly Once">EXACTLY_ONCE</value> -->
       </var>
     </loop>
     <scenario name="t1_${persistent}_${size}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">

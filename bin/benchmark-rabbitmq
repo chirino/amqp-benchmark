@@ -83,7 +83,7 @@ function server_start() {
 }
 
 function benchmark_run() {
-  $BENCHMARK_EXEC --host $1 --user guest --password guest  ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/rabbitmq-${RABBITMQ_VERSION}.json"
+  $BENCHMARK_EXEC --host $1 --user guest --password guest  ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/rabbitmq-${RABBITMQ_VERSION}-$(date "+%Y-%m-%d").json"
 }
 
 benchmark_main $*
