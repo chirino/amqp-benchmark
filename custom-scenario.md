@@ -4,58 +4,49 @@ A benchmarking tool for [Stomp](http://stomp.github.com) servers.
 
 ## Build Prep
 
-* Install [sbt 0.7.7](http://code.google.com/p/simple-build-tool/downloads/detail?name=sbt-launch-0.7.7.jar&can=2&q=)
-  and follow the [setup instructions](http://code.google.com/p/simple-build-tool/wiki/Setup) but instead 
-  of setting up the sbt script to use `sbt-launch.jar "$@"` please use `sbt-launch.jar "$*"` instead.
-  
-* run: `sbt update` in the stomp-benchmark directory
+* Install [maven 3.0.4](http://maven.apache.org/download.html)
 
 ## Running a Custom Scenario
 
 If there is a particular scenario you want to manually execute against the 
 broker, you can do so by starting up the Scala interactive interpreter by
-running `sbt console`
+running `mvn compile scala:console`
 
 Then at the console you execute:
 
-    scala> val scenario = new com.github.stomp.benchmark.NonBlockingScenario
-    scenario: com.github.stomp.benchmark.Scenario = 
+    scala> val scenario = new org.fusesource.amqp.benchmark.ProtonScenario
+    scenario: org.fusesource.amqp.benchmark.ProtonScenario = 
     --------------------------------------
     Scenario Settings
     --------------------------------------
       host                  = 127.0.0.1
-      port                  = 61613
+      port                  = 5672
       destination_type      = queue
+      queue_prefix          = /queue/
+      topic_prefix          = /topic/
       destination_count     = 1
-      destination_name      = load
+      destination_name      = 
       sample_interval (ms)  = 1000
   
       --- Producer Properties ---
       producers             = 1
       message_size          = 1024
       persistent            = false
-      sync_send             = false
-      content_length        = true
+      producer_qos          = AT_LEAST_ONCE
       producer_sleep (ms)   = 0
-      headers               = List()
   
       --- Consumer Properties ---
       consumers             = 1
       consumer_sleep (ms)   = 0
-      ack                   = auto
-      selector              = null
-      durable               = false
+      consumer_prefix       = consumer-
 
 This creates a new NonBlockingScenario object which you can adjust it's properties and
 then run by executing `scenario.run`.  For example, to run 10 producers and no
-consumer on a topic, you would update the scenario object properties as follows:
+consumers, you would update the scenario object properties as follows:
 
     scala> scenario.producers = 10
-
     scala> scenario.consumers = 0
 
-    scala> scenario.destination_type = "topic"
-    
 When you actually run the scenario, you it will report back the throughput metrics.
 Press enter to stop the run.
 

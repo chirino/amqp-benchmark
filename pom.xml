@@ -32,12 +32,13 @@
 
     <!-- dependency versions -->
     <scala-version>2.8.1</scala-version>
+    <karaf-version>2.1.0</karaf-version>
     <maven-scala-plugin-version>2.15.0</maven-scala-plugin-version>
-    <karaf-version>2.2.1</karaf-version>
     <apollo-version>99-trunk-SNAPSHOT</apollo-version>
     <slf4j-version>1.6.0</slf4j-version>
     <maven-assembly-plugin-version>2.2.1</maven-assembly-plugin-version>
     <hawtdispatch-version>1.12</hawtdispatch-version>
+    <hawtbuf-version>1.9</hawtbuf-version>
     <jackson-version>1.9.2</jackson-version>
 
   </properties>
@@ -48,16 +49,7 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <scope>compile</scope>
       <version>${scala-version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-compiler</artifactId>
-      <version>${scala-version}</version>
-      <scope>compile</scope>
-      <optional>true</optional>
     </dependency>
 
     <dependency>
@@ -66,17 +58,33 @@
       <version>${hawtdispatch-version}</version>
     </dependency>
     <dependency>
+      <groupId>org.fusesource.hawtdispatch</groupId>
+      <artifactId>hawtdispatch-transport</artifactId>
+      <version>${hawtdispatch-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.hawtbuf</groupId>
+      <artifactId>hawtbuf</artifactId>
+      <version>${hawtbuf-version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>apollo-amqp</artifactId>
       <version>${apollo-version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.activemq</groupId>
+          <artifactId>apollo-broker</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
-
+    
     <dependency>
       <groupId>org.apache.karaf.shell</groupId>
       <artifactId>org.apache.karaf.shell.console</artifactId>
       <version>${karaf-version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
@@ -97,38 +105,14 @@
       <artifactId>slf4j-nop</artifactId>
       <version>${slf4j-version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.karaf.shell</groupId>
-      <artifactId>org.apache.karaf.shell.console</artifactId>
-      <version>${karaf-version}</version>
-    </dependency>
 
   </dependencies>
 
   <build>
-
-    <defaultGoal>install</defaultGoal>
     <sourceDirectory>src/main/scala</sourceDirectory>
     <testSourceDirectory>src/test/scala</testSourceDirectory>
 
-    <resources>
-      <resource>
-        <directory>target/schema</directory>
-        <includes>
-          <include>**/*</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>src/main/resources</directory>
-        <includes>
-          <include>**/*</include>
-        </includes>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-
     <plugins>
-
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
@@ -164,7 +148,7 @@
           </descriptorRefs>
           <archive>
             <manifest>
-              <mainClass>com.github.stomp.benchmark.Benchmark</mainClass>
+              <mainClass>org.fusesource.amqp.benchmark.Benchmark</mainClass>
             </manifest>
           </archive>
         </configuration>

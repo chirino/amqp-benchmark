@@ -64,8 +64,8 @@ object Scenario {
 trait Scenario {
   import Scenario._
 
-  var login: Option[String] = None
-  var passcode: Option[String] = None
+  var user: Option[String] = None
+  var password: Option[String] = None
   var request_response = false
 
   private var _producer_sleep: { def apply(): Int; def init(time: Long) } = new { def apply() = 0; def init(time: Long) {}  }
@@ -98,11 +98,7 @@ trait Scenario {
   def message_size_= (new_func: { def apply(): Int; def init(time: Long) }) = _message_size = new_func
 
   var persistent = false
-  var persistent_header = "persistent:true"
-  var subscribe_headers = Array[Array[String]]()
-  var ack = "auto"
-  var selector:String = null
-  var durable = false
+
   var consumer_prefix = "consumer-"
   var consumer_qos = "AT_LEAST_ONCE"
   var consumer_prefetch = 100
@@ -296,17 +292,13 @@ trait Scenario {
     "  producers             = "+producers+"\n"+
     "  message_size          = "+message_size+"\n"+
     "  persistent            = "+persistent+"\n"+
-    "  producer qos          = "+producer_qos+"\n"+
+    "  producer_qos          = "+producer_qos+"\n"+
     "  producer_sleep (ms)   = "+producer_sleep+"\n"+
     "  \n"+
     "  --- Consumer Properties ---\n"+
     "  consumers             = "+consumers+"\n"+
     "  consumer_sleep (ms)   = "+consumer_sleep+"\n"+
-    "  ack                   = "+ack+"\n"+
-    "  selector              = "+selector+"\n"+
-    "  durable               = "+durable+"\n"+
     "  consumer_prefix       = "+consumer_prefix+"\n"+
-    "  subscribe_headers     = "+subscribe_headers.map( _.mkString(", ") ).mkString("(", "), (", ")")+"\n"+
     ""
 
   }
@@ -327,13 +319,9 @@ trait Scenario {
     s :+= ("persistent", persistent.toString)
     s :+= ("producer_qos", producer_qos)
     s :+= ("producer_sleep", producer_sleep.toString)
-    s :+= ("subscribe_headers", subscribe_headers.map( _.mkString(", ") ).mkString("(", "), (", ")"))
     s :+= ("consumers", consumers.toString)
     s :+= ("consumer_sleep", consumer_sleep.toString)
     s :+= ("consumer_qos", consumer_qos)
-    s :+= ("ack", ack)
-    s :+= ("selector", selector)
-    s :+= ("durable", durable.toString)
     s :+= ("consumer_prefix", consumer_prefix)
     
     s
@@ -348,14 +336,6 @@ trait Scenario {
   }
 
   protected def response_destination(i:Int) = queue_prefix+response_destination_name+"-"+i
-
-  protected def subscribe_headers_for(i:Int) = {
-    if ( subscribe_headers.isEmpty ) {
-      Array[String]()
-    } else {
-      subscribe_headers(i%subscribe_headers.size)
-    }
-  }
 
   var producer_samples:Option[ListBuffer[(Long,Long)]] = None
   var consumer_samples:Option[ListBuffer[(Long,Long)]] = None
@@ -457,7 +437,7 @@ trait Scenario {
 
   def drain = {
     done.set(false)
-    if( destination_type=="queue" || destination_type=="raw_queue" || durable==true ) {
+    if( destination_type=="queue" || destination_type=="raw_queue" ) {
       print("draining")
       consumer_counter.set(0)
       var consumer_clients = List[Client]()

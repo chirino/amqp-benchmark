@@ -1,0 +1,58 @@
+<scenarios>
+  
+  <description>Various benchmarking scenarios to stress-test an AMQP broker</description>
+  <platform_name>Platform Name (dummy)</platform_name>
+  <platform_desc>Platform Description (dummy)</platform_desc>
+  <common>
+    
+    <!-- 
+    <host>localhost</host>
+    <port>61613</port>
+    <login>admin</login>
+    <passcode>password</passcode> 
+    -->
+
+    <sample_count>5</sample_count>
+    <sample_interval>1000</sample_interval>
+    <warm_up_count>1</warm_up_count>
+    <destinations>1</destinations>
+    <producers>1</producers>
+    <consumers>1</consumers>
+  </common>
+  <!-- ======================================================================= -->
+  <!--  Queue Tests  -->
+  <!-- ======================================================================= -->
+
+  <group name="Queue throughput tests">
+    <description>
+      1 producer and 1 consumer connected to a queue.
+    </description>
+    <common>
+      <destination_type>queue</destination_type>
+    </common>
+    <loop>
+      <var name="persistent" label="Message Persistence">
+        <value label="persistent">true</value>
+        <value label="non-persistent">false</value>
+      </var>
+      <var name="size" label="Message Size">
+        <value label="20 bytes">20</value>
+        <value label="1k">1024</value>
+        <!-- <value label="100k">102400</value> -->
+      </var>
+      <var name="producer_qos" label="Delivery QoS">
+        <value>AT_MOST_ONCE</value>
+        <value>AT_LEAST_ONCE</value>
+        <!-- <value>EXACTLY_ONCE</value> -->
+      </var>
+    </loop>
+    <scenario name="t1_${persistent}_${size}" label="persistent: ${persistent}, size: ${size}, qos: ${producer_qos}">
+        <clients name="Queue Load Tests: persistent: ${persistent}, size: ${size}, qos: ${producer_qos}">
+        <message_size>${size}</message_size>
+        <persistent>${persistent}</persistent>
+        <producer_qos>${producer_qos}</producer_qos>
+      </clients>
+    </scenario>
+  </group>
+
+</scenarios>

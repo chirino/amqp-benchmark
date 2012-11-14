@@ -31,7 +31,7 @@ object ProtonScenario {
     val scenario = new ProtonScenario
     def r(p:Int, d:Int, c:Int) = { scenario.producers = p; scenario.destination_count = d; scenario.consumers = c; scenario.run}
     scenario.host = "localhost"
-//    scenario.port = 61613
+    scenario.port = 61613
     scenario.display_errors = true
 //    scenario.login = Some("admin")
 //    scenario.passcode = Some("password")
@@ -43,7 +43,7 @@ object ProtonScenario {
 //    scenario.consumer_prefetch = 1
     scenario.message_size = 20
     scenario.trace = false
-    r(1,1,1)
+    r(0,1,1)
   }
 }
 
@@ -85,8 +85,8 @@ class ProtonScenario extends Scenario {
         val options = new AmqpConnectOptions();
         options.setDispatchQueue(queue)
         options.setHost(host, port)
-        for ( x <- login ) { options.setUser( x )}
-        for ( x <- passcode ) { options.setPassword( x )}
+        for ( x <- user ) { options.setUser( x )}
+        for ( x <- password ) { options.setPassword( x )}
         connection = AmqpConnection.connect(options)
         if( trace ) {
           connection.setProtocolTracer(new ProtocolTracer() {
@@ -326,7 +326,7 @@ class ProtonScenario extends Scenario {
 
     def send_next:Unit = {
       val message = session.createBinaryMessage(data.data, data.offset, data.length);
-      message.setDurable(durable)
+      message.setDurable(persistent)
 
       def send_completed:Unit = {
         message_counter += 1

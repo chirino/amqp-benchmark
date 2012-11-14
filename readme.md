@@ -56,5 +56,4 @@ The results will be stored in the ~/reports directory.
 
 ## Running Custom Scenarios
 
-See the [custom-scenario.md ](https://github.com/chirino/amqp-benchmark/blob/master/custom-scenario.md) file for more information
-on how to configure other benchmarking scenarios.
+See the [custom-scenario.md ](https://github.com/chirino/amqp-benchmark/blob/master/custom-scenario.md) file for more information on how to configure other benchmarking scenarios.

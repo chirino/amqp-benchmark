@@ -27,13 +27,13 @@ import collection.JavaConversions
 import java.lang.{String, Class}
 
 import org.apache.felix.gogo.commands.basic.DefaultActionPreparator
-import org.apache.felix.service.command.CommandSession
 import org.apache.felix.gogo.commands.{CommandException, Action, Option => option, Argument => argument, Command => command}
 
 import sun.misc.Signal;
 import sun.misc.SignalHandler
 import org.codehaus.jackson.map.ObjectMapper
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics
+import org.osgi.service.command.CommandSession
 ;
 
 object Benchmark {
@@ -63,10 +63,10 @@ object Benchmark {
   }
 }
 
-@command(scope="stomp", name = "benchmark", description = "The Stomp benchmarking tool")
+@command(scope="amqp", name = "benchmark", description = "The AMQP benchmarking tool")
 class Benchmark extends Action {
   
-  // Helpers needed to diferenciate between default value and not set on the CLI value for primitive values
+  // Helpers needed to differentiate between default value and not set on the CLI value for primitive values
   def toIntOption(x: java.lang.Integer): Option[Int] = if(x!=null) Some(x.intValue) else None
   def toLongOption(x: java.lang.Long): Option[Long] = if(x!=null) Some(x.longValue) else None
   def toBooleanOption(x: java.lang.Boolean): Option[Boolean] = if(x!=null) Some(x.booleanValue) else None
@@ -96,15 +96,6 @@ class Benchmark extends Action {
   var host = FlexibleProperty(default = Some("127.0.0.1"), high_priority = () => Option(cl_host))
   @option(name = "--port", description = "server port")
   var cl_port: java.lang.Integer = _
-  var port = FlexibleProperty(default = Some(61613), high_priority = () => toIntOption(cl_port))
-
-  @option(name = "--login", description = "login name to connect with")
-  var cl_login:String = _
-  var login = FlexibleProperty(default = None, high_priority = () => Option(cl_login))
-  @option(name = "--passcode", description = "passcode to connect with")
-  var cl_passcode:String = _
-  var passcode = FlexibleProperty(default = None, high_priority = () => Option(cl_passcode))
-
   @option(name = "--sample-count", description = "number of samples to take")
   var cl_sample_count: java.lang.Integer = _
   var sample_count = FlexibleProperty(default = Some(15), high_priority = () => toIntOption(cl_sample_count))
@@ -115,63 +106,25 @@ class Benchmark extends Action {
   var cl_warm_up_count: java.lang.Integer = _
   var warm_up_count = FlexibleProperty(default = Some(3), high_priority = () => toIntOption(cl_warm_up_count))
 
-  @argument(index=0, name = "out", description = "The file to store benchmark metrics in", required=true)
-  var cl_out: File = _
-  var out = FlexibleProperty(default = None, high_priority = () => Option(cl_out))
-
-  @option(name = "--enable-topics", description = "enable benchmarking the topic scenarios")
-  var cl_enable_topics: java.lang.Boolean = _
-  var enable_topics = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_enable_topics))
-  @option(name = "--enable-queues", description = "enable benchmarking the queue scenarios")
-  var cl_enable_queues: java.lang.Boolean = _
-  var enable_queues = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_enable_queues))
-  @option(name = "--enable-persistent", description = "enable benchmarking the persistent scenarios")
-  var cl_enable_persistence: java.lang.Boolean = _
-  var enable_persistence = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_enable_persistence))
+  var port = FlexibleProperty(default = Some(5672), high_priority = () => toIntOption(cl_port))
 
   @option(name = "--scenario-connection-scale", description = "enable the connection scale scenarios")
   var cl_scenario_connection_scale: java.lang.Boolean = _
   var scenario_connection_scale = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_scenario_connection_scale))
+  @option(name = "--user", description = "user name to connect with")
+  var cl_user:String = _
+  var user = FlexibleProperty(default = None, high_priority = () => Option(cl_user))
+  @option(name = "--password", description = "password to connect with")
+  var cl_password:String = _
+  var password = FlexibleProperty(default = None, high_priority = () => Option(cl_password))
 
-  @option(name = "--scenario-request-response", description = "enable the request response scenarios")
-  var cl_scenario_request_response: java.lang.Boolean = _
-  var scenario_request_response = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_scenario_request_response))
-
-
-  @option(name = "--scenario-connection-scale-rate", description = "How many connection to add after each sample")
-  var cl_scenario_connection_scale_rate: java.lang.Integer = _
-  var scenario_connection_scale_rate = FlexibleProperty(default = Some(50), high_priority = () => toIntOption(cl_scenario_connection_scale_rate))
-  @option(name = "--scenario-connection-max-samples", description = "The maximum number of sample to take in the connection scale scenario")
-  var cl_scenario_connection_scale_max_samples: java.lang.Integer = _
-  var scenario_connection_scale_max_samples = FlexibleProperty(default = Some(100), high_priority = () => toIntOption(cl_scenario_connection_scale_max_samples))
-
-  @option(name = "--scenario-producer-throughput", description = "enable the producer throughput scenarios")
-  var cl_scenario_producer_throughput: java.lang.Boolean = _
-  var scenario_producer_throughput = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_scenario_producer_throughput))
-  @option(name = "--scenario-queue-loading", description = "enable the queue load/unload scenarios")
-  var cl_scenario_queue_loading: java.lang.Boolean = _
-  var scenario_queue_loading = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_scenario_queue_loading))
-  @option(name = "--scenario-partitioned", description = "enable the partitioned load scenarios")
-  var cl_scenario_partitioned: java.lang.Boolean = _
-  var scenario_partitioned = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_scenario_partitioned))
-  @option(name = "--scenario-fan-in-out", description = "enable the fan in/fan out scenarios")
-  var cl_scenario_fan_in_out: java.lang.Boolean = _
-  var scenario_fan_in_out = FlexibleProperty(default = Some(true), high_priority = () => toBooleanOption(cl_scenario_fan_in_out))
-  @option(name = "--scenario-durable-subs", description = "enable the durable subscription scenarios")
-  var cl_scenario_durable_subs: java.lang.Boolean = _
-  var scenario_durable_subs = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_scenario_durable_subs))
-
-//  @option(name = "--scenario-selector", description = "enable the selector based scenarios")
-//  var cl_scenario_selector: java.lang.Boolean = _
-//  var scenario_selector = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_scenario_selector))
-
-  @option(name = "--scenario-slow-consumer", description = "enable the slow consumer scenarios")
-  var cl_scenario_slow_consumer: java.lang.Boolean = _
-  var scenario_slow_consumer = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_scenario_slow_consumer))
-
-  @option(name = "--scenario-file", description = "uses a scenario defined in an XML file instead of the default ones")
+  @argument(index=0, name = "scenario-file", description = "The scenario file used to define the benchmark")
   var cl_scenario_file: File = _
   var scenario_file = FlexibleProperty(default = None, high_priority = () => Option(cl_scenario_file))
+
+  @argument(index=1, name = "out", description = "The file to store benchmark metrics in", required=true)
+  var cl_out: File = _
+  var out = FlexibleProperty(default = None, high_priority = () => Option(cl_out))
 
   @option(name = "--queue-prefix", description = "prefix used for queue destiantion names.")
   var cl_queue_prefix: String = _
@@ -183,31 +136,10 @@ class Benchmark extends Action {
   @option(name = "--drain-timeout", description = "How long to wait for a drain to timeout in ms.")
   var cl_drain_timeout: java.lang.Long = _
   var drain_timeout = FlexibleProperty(default = Some(3000L), high_priority = () => toLongOption(cl_drain_timeout))
-
-  @option(name = "--persistent-header", description = "The header to set on persistent messages to make them persistent.")
-  var cl_persistent_header: String = _
-  var persistent_header = FlexibleProperty(default = Some("persistent:true"), high_priority = () => Option(cl_persistent_header))
-
-  @option(name = "--messages-per-connection", description = "The number of messages that are sent before the client reconnect.")
-  var cl_messages_per_connection: java.lang.Integer = _
-  var messages_per_connection = FlexibleProperty(
-    default = Some(new propertyFunction { override def apply() = -1 }), 
-    high_priority = () => {
-      if (cl_messages_per_connection != null)
-        Some(new propertyFunction { override def apply() = cl_messages_per_connection.intValue })
-      else
-        None
-    }
-  )
-
   @option(name = "--display-errors", description = "Should errors get dumped to the screen when they occur?")
   var cl_display_errors: java.lang.Boolean = _
   var display_errors = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_display_errors))
   
-  @option(name = "--new-json", description = "Generate the new json format including more information")
-  var cl_new_json: java.lang.Boolean = _
-  var new_json = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_new_json))
-
   var samples = HashMap[String, List[(Long,Long)]]()
   var benchmark_results = new BenchmarkResults()
 
@@ -215,6 +147,9 @@ class Benchmark extends Action {
   var cl_summerize: Boolean = _
   var summerize = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_summerize))
 
+  @option(name = "--trace", description = "Enable AMQP frame tracing")
+  var cl_trace: Boolean = _
+  var trace = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_trace))
 
   def json_format(value:Option[List[String]]):String = {
     value.map { json_format _ }.getOrElse("null")
@@ -230,26 +165,7 @@ class Benchmark extends Action {
       parent_dir.mkdirs
     }
     val os = new PrintStream(new FileOutputStream(out.get))
-    
-    if( scenario_file.getOption.isEmpty || (!new_json.get)) {
-      os.println("{")
-      os.println("""  "benchmark_settings": {""")
-      os.println("""    "broker_name": "%s",""".format(broker_name.get))
-      os.println("""    "host": "%s",""".format(host.get))
-      os.println("""    "port": %d,""".format(port.get))
-      os.println("""    "sample_count": %d,""".format(sample_count.get))
-      os.println("""    "sample_interval": %d,""".format(sample_interval.get))
-      os.println("""    "warm_up_count": %d,""".format(warm_up_count.get))
-      os.println("""    "scenario_connection_scale_rate": %d""".format(scenario_connection_scale_rate.get))
-      os.println("""  },""")
-      os.println(samples.map { case (name, sample)=>
-        """  "%s": %s""".format(name, json_format(sample.map(x=> "[%d,%d]".format(x._1,x._2))))
-      }.mkString(",\n"))
-      os.println("}")
-    } else {
-      os.print(benchmark_results.to_json())
-    }
-
+    os.print(benchmark_results.to_json())
     os.close
     
     println("===================================================================")
@@ -304,11 +220,7 @@ class Benchmark extends Action {
     println("===================================================================")
 
     try {
-      if( scenario_file.getOption.isEmpty ) {
-        run_benchmarks
-      } else {
-        load_and_run_benchmarks
-      }
+      load_and_run_benchmarks
     } catch {
       case e : Exception => {
         println("There was an error, we proceed to write the results we got:")
@@ -339,13 +251,13 @@ class Benchmark extends Action {
       scenario.key_store_file = key_store_file.getOption()
       scenario.key_store_password = key_store_password.getOption()
       scenario.key_password = key_password.getOption()
-      scenario.login = login.getOption
-      scenario.passcode = passcode.getOption
+      scenario.user = user.getOption
+      scenario.password = password.getOption
       scenario.queue_prefix = queue_prefix.get
       scenario.topic_prefix = topic_prefix.get
       scenario.drain_timeout = drain_timeout.get
-      scenario.persistent_header = persistent_header.get
       scenario.display_errors = display_errors.get
+      scenario.trace = trace.get
       scenario
     }
 
@@ -367,7 +279,7 @@ class Benchmark extends Action {
       s.headOption match {
         case Some(senario) =>
           senario.with_load {
-            with_load(s.drop(1)) {
+            with_load[T](s.drop(1)) {
               proc
             }
           }
@@ -505,223 +417,6 @@ class Benchmark extends Action {
   private def plabel(persistent:Boolean) = if(persistent) "p" else ""
   private def slabel(sync_send:Boolean) = if(sync_send) "" else "a"
 
-  def run_benchmarks = {
-
-
-    val persistence_values = if (enable_persistence.get) {
-      List(false, true)
-    } else {
-      List(false)
-    }
-
-    var destination_types = List[String]()
-    if( enable_queues.get ) {
-      destination_types ::= "queue"
-    }
-    if( enable_topics.get ) {
-      destination_types ::= "topic"
-    }
-
-    if(scenario_request_response.get) {
-      for( producers <- List(1, 10, 100); persistent <- List(false, true); consumers <- List(1, 5, 10) ) {
-        val name = "rr_20b_%d%s%s_1queue_%d".format(producers, plabel(persistent), slabel(persistent), consumers)
-        benchmark(name) { g=>
-          g.message_size = 20
-          g.producers = producers
-          g.consumers = consumers
-          g.request_response = true
-          g.persistent = persistent
-          g.destination_type = "queue"
-        }
-      }
-    }
-    
-    if(scenario_connection_scale.get ) {
-
-      for( messages_per_connection <- List(-1)) {
-
-        /** this test keeps going until we start getting a large number of errors */
-        var remaining = scenario_connection_scale_max_samples.get
-        def is_done(scenarios:List[Scenario]):Boolean = {
-          remaining -= 1;
-          var errors = 0L
-          scenarios.foreach( _.error_samples.lastOption.foreach( errors+= _._2 ) )
-          return errors >= scenario_connection_scale_rate.get || remaining <= 0
-        }
-
-        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done) { scenario=>
-          scenario.message_size = 20
-          scenario.producers = 0
-          scenario.messages_per_connection = messages_per_connection
-          scenario.producers_per_sample = scenario_connection_scale_rate.get
-          scenario.producer_sleep = 1000
-          scenario.persistent = false
-          scenario.destination_count = 1
-          scenario.destination_type = "topic"
-          scenario.consumers = 1
-        }
-      }
-    }
-    
-//    if( enable_persistence.get && scenario_queue_loading.get ) {
-//      for( persistent <- List(false, true)) {
-//        val size = 20
-//
-//        // Benchmark queue loading
-//        val name = "%s_1%s%s_1queue_0".format(mlabel(size), plabel(persistent), slabel(persistent))
-//        benchmark(name, false, 30) { g=>
-//          g.message_size = 20
-//          g.producers = 1
-//          g.sync_send = persistent
-//          g.persistent = persistent
-//          g.destination_count = 1
-//          g.destination_type = "queue"
-//          g.consumers = 0
-//          g.destination_name = "load_me_up"
-//        }
-//
-//        // Benchmark unloading
-//        if(persistent) {
-//          val name = "%s_0_1queue_1".format(mlabel(size))
-//          benchmark(name, true, 30) { g=>
-//            g.producers = 0
-//            g.destination_count = 1
-//            g.destination_type = "queue"
-//            g.consumers = 1
-//            g.destination_name = "load_me_up"
-//          }
-//        }
-//
-//      }
-//    }
-//
-//    // Setup a scenario /w fast and slow consumers
-//    if(scenario_slow_consumer.get) {
-//      for( dt <- destination_types) {
-//        multi_benchmark(List("20b_1a_1%s_1fast".format(dt), "20b_0_1%s_1slow".format(dt))) {
-//          case List(fast:Scenario, slow:Scenario) =>
-//            fast.message_size = 20
-//            fast.producers = 1
-//            fast.persistent = false
-//            fast.sync_send = false
-//            fast.destination_count = 1
-//            fast.destination_type = dt
-//            fast.consumers = 1
-//
-//            slow.producers = 0
-//            slow.destination_count = 1
-//            slow.destination_type = dt
-//            slow.consumer_sleep = 100 // He can only process 10 /sec
-//            slow.consumers = 1
-//          case _ =>
-//        }
-//      }
-//    }
-
-//    // Setup selecting consumers on 1 destination.
-//    if( scenario_selector.get ) {
-//      for( dt <- destination_types) {
-//        multi_benchmark(List("20b_color_2a_1%s_0".format(dt), "20b_0_1%s_1_red".format(dt), "20b_0_1%s_1_blue".format(dt))) {
-//          case List(producer:Scenario, red:Scenario, blue:Scenario) =>
-//            producer.message_size = 20
-//            producer.producers = 2
-//            producer.persistent = false
-//            producer.sync_send = false
-//            producer.destination_count = 1
-//            producer.destination_type = dt
-//            producer.consumers = 0
-//
-//            red.producers = 0
-//            red.destination_count = 1
-//            red.destination_type = dt
-//            red.selector = "color='red'"
-//            red.consumers = 1
-//
-//            blue.producers = 0
-//            blue.destination_count = 1
-//            blue.destination_type = dt
-//            blue.selector = "color='blue'"
-//            blue.consumers = 1
-//          case _ =>
-//        }
-//      }
-//    }
-
-//    if( enable_topics.get && scenario_producer_throughput.get ) {
-//      // Benchmark for figuring out the max producer throughput
-//      for( size <- List(20, 1024, 1024 * 256) ) {
-//        val name = "%s_1a_1topic_0".format(mlabel(size))
-//        benchmark(name) { g=>
-//          g.message_size = size
-//          g.producers = 1
-//          g.persistent = false
-//          g.sync_send = false
-//          g.destination_count = 1
-//          g.destination_type = "topic"
-//          g.consumers = 0
-//        }
-//      }
-//    }
-//
-//    // Benchmark for the queue parallel load scenario
-//    if( scenario_partitioned.get ) {
-//
-//      val message_sizes = List(20, 1024, 1024 * 256)
-//      val destinations = List(1, 5, 10)
-//
-//      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
-//        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
-//        benchmark(name) { g=>
-//          g.message_size = size
-//          g.producers = load
-//          g.persistent = persistent
-//          g.sync_send = persistent
-//          g.destination_count = load
-//          g.destination_type = destination_type
-//          g.consumers = load
-//        }
-//      }
-//    }
-//
-//    if( scenario_fan_in_out.get  ) {
-//      val client_count = List(1, 5, 10)
-//      val message_sizes = List(20)
-//
-//      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
-//        if( !(consumers == 1 && producers == 1) ) {
-//          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
-//          benchmark(name) { g=>
-//            g.message_size = size
-//            g.producers = producers
-//            g.persistent = persistent
-//            g.sync_send = persistent
-//            g.destination_count = 1
-//            g.destination_type = destination_type
-//            g.consumers = consumers
-//          }
-//        }
-//      }
-//    }
-//
-//    if( enable_topics.get && scenario_durable_subs.get) {
-//      // Benchmark for durable subscriptions on topics
-//      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
-//        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
-//        benchmark(name) { g=>
-//          g.message_size = size
-//          g.producers = 1
-//          g.persistent = persistent
-//          g.sync_send = persistent
-//          g.destination_count = 1
-//          g.destination_type = "topic"
-//          g.consumers = load
-//          g.durable = true
-//        }
-//      }
-//    }
-
-  }
-
   def load_and_run_benchmarks = {
     
     var producers = FlexibleProperty[Int]() 
@@ -735,23 +430,18 @@ class Benchmark extends Action {
     
     var drain = FlexibleProperty[Boolean](default = Some(false))
     var persistent = FlexibleProperty[Boolean]()
-    var durable = FlexibleProperty[Boolean]()
     var producer_qos = FlexibleProperty[String]()
     var consumer_qos = FlexibleProperty[String]()
     var consumer_prefetch = FlexibleProperty[Int]()
 
-    var ack = FlexibleProperty[String]()
-    
     var max_concurrent_connects = FlexibleProperty[Int]()
     var producers_per_sample = FlexibleProperty[Int]()
     var consumers_per_sample = FlexibleProperty[Int]()
 
-    var headers = FlexibleProperty[Array[Array[String]]](default = Some(Array[Array[String]]()))
-    var selector = FlexibleProperty[String]()
-    
     var producer_sleep = FlexibleProperty[propertyFunction](default = Some(new propertyFunction { override def apply() = 0 }))
     var consumer_sleep = FlexibleProperty[propertyFunction](default = Some(new propertyFunction { override def apply() = 0 }))
     var message_size = FlexibleProperty[propertyFunction](default = Some(new propertyFunction { override def apply() = 1024 }))
+    var messages_per_connection = FlexibleProperty[propertyFunction](default = Some(new propertyFunction { override def apply() = -1 }))
 
     def getStringValue(property_name: String, ns_xml: NodeSeq, vars: Map[String, String] = Map.empty[String, String]): Option[String] = {
       val value = ns_xml \ property_name
@@ -862,8 +552,8 @@ class Benchmark extends Action {
       warm_up_count.push(getIntValue("warm_up_count", node, vars))
       sample_interval.push(getIntValue("sample_interval", node, vars))
       
-      login.push(getStringValue("login", node, vars))
-      passcode.push(getStringValue("passcode", node, vars))
+      user.push(getStringValue("user", node, vars))
+      password.push(getStringValue("password", node, vars))
       host.push(getStringValue("host", node, vars))
       port.push(getIntValue("port", node, vars))
       producers.push(getIntValue("producers", node, vars))
@@ -878,22 +568,16 @@ class Benchmark extends Action {
       content_length.push(getBooleanValue("content_length", node, vars))
       drain_timeout.push(getIntValue("drain_timeout", node, vars).map(_.toLong))
       persistent.push(getBooleanValue("persistent", node, vars))
-      durable.push(getBooleanValue("durable", node, vars))
       producer_qos.push(getStringValue("producer_qos", node, vars))
-      ack.push(getStringValue("ack", node, vars))
       max_concurrent_connects.push(getIntValue("max_concurrent_connects", node, vars))
       producers_per_sample.push(getIntValue("producers_per_sample", node, vars))
       consumers_per_sample.push(getIntValue("consumers_per_sample", node, vars))
       consumer_qos.push(getStringValue("consumer_qos", node, vars))
       consumer_prefetch.push(getIntValue("consumer_prefetch", node, vars))
 
-      headers.push(getPropertyHeaders("headers", node, vars))
-      selector.push(getStringValue("selector", node, vars))
-
       producer_sleep.push(getPropertyFunction("producer_sleep", node, vars))
       consumer_sleep.push(getPropertyFunction("consumer_sleep", node, vars))
       message_size.push(getPropertyFunction("message_size", node, vars))
-      messages_per_connection.push(getPropertyFunction("messages_per_connection", node, vars))
     }
     
     def pop_properties() {
@@ -902,8 +586,8 @@ class Benchmark extends Action {
       warm_up_count.pop()
       sample_interval.pop()
       
-      login.pop()
-      passcode.pop()
+      user.pop()
+      password.pop()
       host.pop()
       port.pop()
       producers.pop()
@@ -919,19 +603,13 @@ class Benchmark extends Action {
       content_length.pop()
       drain_timeout.pop()
       persistent.pop()
-      durable.pop()
       producer_qos.pop()
-      ack.pop()
-      messages_per_connection.pop()
       max_concurrent_connects.pop()
       producers_per_sample.pop()
       consumers_per_sample.pop()
       consumer_qos.pop()
       consumer_prefetch.pop()
 
-      headers.pop()
-      selector.pop()
-      
       producer_sleep.pop()
       consumer_sleep.pop()
     }
@@ -1064,8 +742,8 @@ class Benchmark extends Action {
               scenario_client_results += (scenario.name -> client_results) // To be able to fill the results from multi_benchmark
               
               // Load all the properties in the scenario
-              scenario.login = login.getOption()
-              scenario.passcode = passcode.getOption()
+              scenario.user = user.getOption()
+              scenario.password = password.getOption()
               scenario.host = host.getOrElse(scenario.host)
               scenario.port = port.getOrElse(scenario.port)
               scenario.producers = producers.getOrElse(0)
@@ -1079,23 +757,18 @@ class Benchmark extends Action {
               scenario.topic_prefix = topic_prefix.getOrElse(scenario.topic_prefix)
               scenario.drain_timeout = drain_timeout.getOrElse(scenario.drain_timeout)
               scenario.persistent = persistent.getOrElse(scenario.persistent)
-              scenario.durable = durable.getOrElse(scenario.durable)
               scenario.producer_qos = producer_qos.getOrElse(scenario.producer_qos)
-              scenario.ack = ack.getOrElse(scenario.ack)
               scenario.max_concurrent_connects = max_concurrent_connects.getOrElse(scenario.max_concurrent_connects)
               scenario.producers_per_sample = producers_per_sample.getOrElse(scenario.producers_per_sample)
               scenario.consumers_per_sample = consumers_per_sample.getOrElse(scenario.consumers_per_sample)
               scenario.consumer_qos = consumer_qos.getOrElse(scenario.consumer_qos)
               scenario.consumer_prefetch = consumer_prefetch.getOrElse(scenario.consumer_prefetch)
 
-//              scenario.headers = headers.get
-              scenario.selector = selector.getOrElse(scenario.selector)
-                
               scenario.producer_sleep = producer_sleep.get
               scenario.consumer_sleep = consumer_sleep.get
               scenario.message_size = message_size.get
               scenario.messages_per_connection = messages_per_connection.get
-              
+
               // Copy the scenario settings to the results
               client_results.settings = scenario.settings
               
