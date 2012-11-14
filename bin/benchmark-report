@@ -11,7 +11,7 @@ BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 cd "${REPORTS_HOME}/.."
 
 JSON_FILES=""
-for f in `ls */*.json 2> /dev/null` ; do
+for f in `ls */*.json | grep -v '/platform.json' 2> /dev/null` ; do
   JSON_FILES+="$f
 "
 done
@@ -25,30 +25,35 @@ PLATFORMS=`(sort <<< "$PLATFORMS") | uniq`
 PLATFORMS=$(cat <<< "$PLATFORMS" | sed 's|$|",|' | sed 's|^|"|')
 PLATFORMS=$(echo $PLATFORMS | sed 's|,$||' | sed 's|"", ||')
 
-BROKERS=""
+PRODUCTS=""
 for f in $JSON_FILES ; do
-  BROKERS+="$(basename $f | sed 's/.json//')
-$BROKERS"
+  PRODUCTS+="$(basename $f | sed 's/.json//')
+$PRODUCTS"
 done
-BROKERS=`(sort <<< "$BROKERS") | uniq`
-BROKERS=$(cat <<< "$BROKERS" | sed 's|$|",|' | sed 's|^|"|')
-BROKERS=$(echo $BROKERS | sed 's|,$||' | sed 's|"", ||')
-
-JSON_FILES=`ls */*.json | sed 's|.json|",|' | sed 's|^|"|'`
-
-cd - > /dev/null
+PRODUCTS=`(sort <<< "$PRODUCTS") | uniq`
+PRODUCTS=$(cat <<< "$PRODUCTS" | sed 's|$|",|' | sed 's|^|"|')
+PRODUCTS=$(echo $PRODUCTS | sed 's|,$||' | sed 's|"", ||')
 
 cat > "index.json" <<EOF
 {
-  "platforms":[${PLATFORMS}]
-  "brokers":[${BROKERS}]
+  "platforms":[${PLATFORMS}],
+  "products":[${PRODUCTS}]
 }
 EOF
 
+cd - > /dev/null
 
 #
 # Only create it if it does not exist as it may get 
 # customized by hand later.
+if [ ! -f "${REPORTS_HOME}/platform.json" ] ; then
+  cat > "${REPORTS_HOME}/platform.json" <<EOF
+{
+  "description":"$(uname -a)"
+}
+EOF
+  
+fi
 if [ ! -f "${REPORTS_HOME}/server-info.html" ] ; then
   
   cat > "${REPORTS_HOME}/server-info.html" <<EOF

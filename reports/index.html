@@ -27,11 +27,7 @@
   	
     <script type='text/javascript'>
     
-      var products = [
-        'default_scenarios1',
-        'default_scenarios2',
-        'default_scenarios3'
-      ];
+      var products = [];
       
       var platforms = [
         ['test-platform', 'Test Platform'],
@@ -496,6 +492,11 @@
           }
         }});
         
+        $.ajax({ url: platform+"/server-info.html", dataType: "html", async:true, success: function(data) {
+          $('#server-info').html(data);
+        }});
+        
+        
         // Load all the other json files
         for (var i = 1; i < products.length; i++) {
           var file = platform + "/" + products[i] + ".json";
@@ -528,7 +529,21 @@
           }
       }
       
-      $(function () { 
+      $(function () {
+        // load the names of the platforms and products..
+        $.ajax({ url: "index.json", async:false, success: function(data) {
+          var index_json = $.parseJSON( data );
+          products = index_json["products"];
+          platforms = index_json["platforms"];
+          for (var i = 0; i < platforms.length; i++) {
+            var platform = platforms[i];
+            platforms[i] = [platform, platform]
+            $.ajax({ url: platform+"/platform.json", async:false, success: function(data) {
+              var data = $.parseJSON( data );
+              platforms[i] = [platform, data["description"]]
+            }});
+          }
+        }});
         create_platforms();
         load_charts(platforms[0][0]); 
       });
@@ -588,7 +603,12 @@
         
         <p>Show data for a benchmark run on the platform: <select id="platform"></select></p>
 
-        <div id="platform-information"></div>
+        <div style="padding: 0em 1em 0em 3em;">
+          <div id="platform-information"></div>
+          <div id="server-info">
+          </div>
+        </div>
+
         
         <div style="display:none" id="legend"></div>
         <div id="results">
