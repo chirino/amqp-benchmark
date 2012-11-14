@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# This shell script automates running the amqp-benchmark [1] against the
+# Apache ActiveMQ project [2].
+#
+# [1]: http://github.com/chirino/amqp-benchmark
+# [2]: http://activemq.apache.org
+#
+
+BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
+
+export ACTIVEMQ_VERSION="5.8-SNAPSHOT"
+export ACTIVEMQ_DOWNLOAD="http://repository.apache.org/service/local/artifact/maven/redirect?r=snapshots&g=org.apache.activemq&a=apache-activemq&v=${ACTIVEMQ_VERSION}&e=tar.gz&c=bin"
+${BASEDIR}/bin/benchmark-activemq $*

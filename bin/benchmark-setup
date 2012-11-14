@@ -4,6 +4,7 @@ true \
 ${REPORTS_HOME:=`pwd`/reports/`hostname`}
 WORKSPACE="${BASEDIR}/workspace"
 SCRIPT_NAME=`basename $0`
+M2_HOME="$WORKSPACE/apache-maven-3.0.4"
 
 mkdir -p "${WORKSPACE}"
 mkdir -p "${REPORTS_HOME}"
@@ -12,48 +13,49 @@ cd "${REPORTS_HOME}" ; REPORTS_HOME=`pwd` ; cd - > /dev/null
 echo "WORKSPACE=${WORKSPACE} and REPORTS_HOME=${REPORTS_HOME}"
 
 #
-# Install SBT
+# Install Maven
 #
-function install_sbt() {
-
-	if [ ! -f "${WORKSPACE}/bin/sbt" ] ; then
-	  mkdir ~/.ivy2 2> /dev/null
-	  mkdir "${WORKSPACE}/bin" 2> /dev/null
-	  cd "${WORKSPACE}/bin"
-	  wget http://simple-build-tool.googlecode.com/files/sbt-launch-0.7.4.jar
-	  cat > ${WORKSPACE}/bin/sbt <<EOF
-#!/bin/sh
-java -server -Xmx2G -XX:MaxPermSize=500m -jar ${WORKSPACE}/bin/sbt-launch-0.7.4.jar "\$*"
-EOF
-	  chmod a+x "${WORKSPACE}/bin/sbt"
-	  cd "${BASEDIR}"
-	  "${WORKSPACE}/bin/sbt" update
-	fi
-  
+function install_mvn() {
+  if [ ! -f "${BASEDIR}/target/amqp-benchmark-1.0-SNAPSHOT-standalone.jar " ] ; then
+    if [ ! -f "${M2_HOME}/bin/mvn" ] ; then
+      cd "${WORKSPACE}"
+      rm -rf "apache-maven-3.0.4-bin.tar.gz"
+      wget "http://www.us.apache.org/dist/maven/maven-3/3.0.4/binaries/apache-maven-3.0.4-bin.tar.gz"
+      tar -zxvf "apache-maven-3.0.4-bin.tar.gz"
+      chmod a+x "${M2_HOME}/bin/mvn"
+      cd -
+    fi
+    ${M2_HOME}/bin/mvn package
+  fi  
+  export BENCHMARK_EXEC="java -jar ${BASEDIR}/target/amqp-benchmark-1.0-SNAPSHOT-standalone.jar"
 }
 
 function server_stop() {
-	killall -9 java erl epmd apollo beam.smp > /dev/null 2>&1
+  killall -9 java erl epmd apollo beam.smp > /dev/null 2>&1
 }
 
 function benchmark_main() {
-	case $1 in
-		start) server_start ;;
-		stop) server_stop ;;
-		*)
-			install_sbt
-			if [ -z "$SERVER_ADDRESS" ] ; then
-				server_start
-				benchmark_run localhost
-				server_stop
-			else
-				ssh $SERVER_ADDRESS mkdir -p ./benchmark/bin
-				scp -r $SERVER_ADDRESS ${BASEDIR}/bin/ $SERVER_ADDRESS:./benchmark
-				ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} start
-				benchmark_run `echo ${SERVER_ADDRESS} | cut -d @ -f 2`
-				ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} stop
-			fi
-		;;
-	esac
+  case $1 in
+    start) server_start ;;
+    stop) server_stop ;;
+    *)
+      install_mvn
+      if [ -z "$SERVER_ADDRESS" ] ; then
+        server_start
+        cd ${BASEDIR}
+        benchmark_run localhost
+        "${BASEDIR}/bin/benchmark-report" $*
+        server_stop
+      else
+        ssh $SERVER_ADDRESS mkdir -p ./benchmark/bin
+        scp -r $SERVER_ADDRESS ${BASEDIR}/bin/ $SERVER_ADDRESS:./benchmark
+        ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} start
+        cd ${BASEDIR}
+        benchmark_run `echo ${SERVER_ADDRESS} | cut -d @ -f 2`
+        "${BASEDIR}/bin/benchmark-report" $*
+        ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} stop
+      fi
+    ;;
+  esac
 
 }
