@@ -10,18 +10,17 @@ mkdir -p "${WORKSPACE}"
 mkdir -p "${REPORTS_HOME}"
 cd "${REPORTS_HOME}" ; REPORTS_HOME=`pwd` ; cd - > /dev/null
 
-echo "WORKSPACE=${WORKSPACE} and REPORTS_HOME=${REPORTS_HOME}"
-
 #
 # Install Maven
 #
 function install_mvn() {
-  if [ ! -f "${BASEDIR}/target/amqp-benchmark-1.0-SNAPSHOT-standalone.jar " ] ; then
+  if [ ! -f "${BASEDIR}/target/amqp-benchmark-1.0-SNAPSHOT-standalone.jar" ] ; then
+    
     if [ ! -f "${M2_HOME}/bin/mvn" ] ; then
       cd "${WORKSPACE}"
-      rm -rf "apache-maven-3.0.4-bin.tar.gz"
       wget "http://www.us.apache.org/dist/maven/maven-3/3.0.4/binaries/apache-maven-3.0.4-bin.tar.gz"
       tar -zxvf "apache-maven-3.0.4-bin.tar.gz"
+      rm -rf "apache-maven-3.0.4-bin.tar.gz"
       chmod a+x "${M2_HOME}/bin/mvn"
       cd -
     fi

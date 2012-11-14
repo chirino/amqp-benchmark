@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# This shell script automates running the stomp-benchmark [1] against the
+# This shell script automates running the amqp-benchmark [1] against the
 # RabbitMQ project [2].
 #
-# [1]: http://github.com/chirino/stomp-benchmark
+# [1]: http://github.com/chirino/amqp-benchmark
 # [2]: http://www.rabbitmq.com/
 #
 true \
@@ -83,10 +83,7 @@ function server_start() {
 }
 
 function benchmark_run() {
-  cd ${BASEDIR}
-  "${WORKSPACE}/bin/sbt" run --host $1 --login guest --passcode guest "${REPORTS_HOME}/rabbitmq-${RABBITMQ_VERSION}.json"
-  # Create a report.
-  "${BASEDIR}/bin/benchmark-report" $*
+  $BENCHMARK_EXEC --host $1 --user guest --password guest  ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/rabbitmq-${RABBITMQ_VERSION}.json"
 }
 
 benchmark_main $*

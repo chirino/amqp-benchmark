@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# This script executes the amqp benchmark app.
+#
+BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
+. ${BASEDIR}/bin/benchmark-setup
+
+install_mvn
+${BENCHMARK_EXEC} $*

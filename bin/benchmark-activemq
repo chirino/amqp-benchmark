@@ -18,7 +18,7 @@ function server_start() {
 
   if [ ! -d "${ACTIVEMQ_HOME}" ]; then
     cd "${WORKSPACE}"
-    wget "$ACTIVEMQ_DOWNLOAD"
+    wget "$ACTIVEMQ_DOWNLOAD" -O "apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz"
     tar -zxvf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
     rm -rf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
   fi  
@@ -32,7 +32,7 @@ function server_start() {
   export ACTIVEMQ_OPTS="-Xmx4G -Xms1G -Dorg.apache.activemq.UseDedicatedTaskRunner=true -Djava.util.logging.config.file=logging.properties"
 
   CONSOLE_LOG="${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.log"
-  "${ACTIVEMQ_HOME}/bin/activemq" console "xbean:file:${ACTIVEMQ_HOME}/conf/activemq-stomp.xml" > "${CONSOLE_LOG}" 2>&1 &
+  "${ACTIVEMQ_HOME}/bin/activemq" console "xbean:file:${ACTIVEMQ_HOME}/conf/activemq.xml" > "${CONSOLE_LOG}" 2>&1 &
   ACTIVEMQ_PID=$!
   echo "Started ActiveMQ with PID: ${ACTIVEMQ_PID}"
   sleep 5
@@ -40,11 +40,7 @@ function server_start() {
 }
 
 function benchmark_run() {
-  cd "${BASEDIR}"
-  echo "${WORKSPACE}/bin/sbt" run --host $1 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
-  "${WORKSPACE}/bin/sbt" run --host $1 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
-  # Create a report.
-  "${BASEDIR}/bin/benchmark-report" $*
+  $BENCHMARK_EXEC --host $1 ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json"
 }
 
 benchmark_main $*
