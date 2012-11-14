@@ -19,11 +19,11 @@
     <producers>1</producers>
     <consumers>1</consumers>
   </common>
+  
   <!-- ======================================================================= -->
   <!--  Queue Tests  -->
   <!-- ======================================================================= -->
-
-  <group name="Queue throughput tests">
+  <group name="Queue Throughput">
     <description>
       1 producer and 1 consumer connected to a queue.
     </description>
@@ -40,17 +40,18 @@
         <value label="1k">1024</value>
         <!-- <value label="100k">102400</value> -->
       </var>
-      <var name="producer_qos" label="Delivery QoS">
+      <var name="qos" label="Delivery QoS">
         <value>AT_MOST_ONCE</value>
         <value>AT_LEAST_ONCE</value>
         <!-- <value>EXACTLY_ONCE</value> -->
       </var>
     </loop>
-    <scenario name="t1_${persistent}_${size}" label="persistent: ${persistent}, size: ${size}, qos: ${producer_qos}">
-        <clients name="Queue Load Tests: persistent: ${persistent}, size: ${size}, qos: ${producer_qos}">
+    <scenario name="t1_${persistent}_${size}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
+      <clients name="clients">
         <message_size>${size}</message_size>
         <persistent>${persistent}</persistent>
-        <producer_qos>${producer_qos}</producer_qos>
+        <producer_qos>${qos}</producer_qos>
+        <consumer_qos>${qos}</consumer_qos>
       </clients>
     </scenario>
   </group>

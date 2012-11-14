@@ -67,6 +67,7 @@ trait Scenario {
   var user: Option[String] = None
   var password: Option[String] = None
   var request_response = false
+  var trace = false
 
   private var _producer_sleep: { def apply(): Int; def init(time: Long) } = new { def apply() = 0; def init(time: Long) {}  }
   def producer_sleep = _producer_sleep()

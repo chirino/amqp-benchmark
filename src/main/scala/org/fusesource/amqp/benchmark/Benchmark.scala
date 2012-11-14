@@ -273,7 +273,7 @@ class Benchmark extends Action {
       }
     }
 
-    print("scenario  : %s ".format(names.mkString(" and ")))
+    print("Sampling %s : ".format(names.mkString(" and ")))
 
     def with_load[T](s:List[Scenario])(proc: => T):T = {
       s.headOption match {
@@ -428,7 +428,7 @@ class Benchmark extends Action {
     
     var content_length = FlexibleProperty[Boolean]()
     
-    var drain = FlexibleProperty[Boolean](default = Some(false))
+    var drain = FlexibleProperty[Boolean](default = Some(true))
     var persistent = FlexibleProperty[Boolean]()
     var producer_qos = FlexibleProperty[String]()
     var consumer_qos = FlexibleProperty[String]()
@@ -699,7 +699,7 @@ class Benchmark extends Action {
       group_results.loop = loop_vars
       
 
-      println("Executing scenario group: "+group_results.name)
+      println("Scenario group: "+group_results.name)
       for (scenario_xml <- group_xml \ "scenario") {
         
         // If there are no loop variables, we just have one empty map and a SingleScenarioResults
@@ -729,7 +729,7 @@ class Benchmark extends Action {
           
           var scenario_client_results = new HashMap[String, ClientResults]()
           
-          println("Executing scenario: "+scenario_results.name)
+          println("Scenario: %s (%s)".format(scenario_results.label, scenario_results.name))
           multi_benchmark(names = names, drain = drain.get, results = scenario_client_results) { scenarios =>
             for (scenario <- scenarios) {
               val clients_xml = (scenario_xml \ "clients").filter( clients => substituteVariables((clients \ "@name").text, vars) == scenario.name )

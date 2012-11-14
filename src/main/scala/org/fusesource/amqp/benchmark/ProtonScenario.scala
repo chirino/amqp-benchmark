@@ -42,8 +42,8 @@ object ProtonScenario {
 //    scenario.consumer_qos = "AT_LEAST_ONCE"
 //    scenario.consumer_prefetch = 1
     scenario.message_size = 20
-    scenario.trace = false
-    r(0,1,1)
+    scenario.trace = true
+    r(1,1,1)
   }
 }
 
@@ -63,7 +63,6 @@ class ProtonScenario extends Scenario {
   def createConsumer(i:Int) = {
     new ConsumerClient(i)
   }
-  var trace = false
 
   trait FuseSourceClient extends Client {
 
@@ -139,7 +138,7 @@ class ProtonScenario extends Scenario {
       }
 
       def close() = {
-        if( connection.getTransportState == CONNECTED ) {
+        if( connection.getTransportState == TransportState.CONNECTED ) {
           connection.close
           state = CLOSING()
         } else {
@@ -161,7 +160,7 @@ class ProtonScenario extends Scenario {
     case class CONNECTED() extends State {
 
       def close() = {
-        if( connection.getTransportState == CONNECTED ) {
+        if( connection.getTransportState == TransportState.CONNECTED ) {
           connection.close
           state = CLOSING()
         } else {
@@ -179,7 +178,14 @@ class ProtonScenario extends Scenario {
       }
 
     }
-    case class CLOSING() extends State
+    case class CLOSING() extends State  {
+      connection.onDisconnected(new Callback[Void] {
+        def onFailure(value: Throwable) { onSuccess(null) }
+        def onSuccess(value: Void) {
+          state = new DISCONNECTED()
+        }
+      })
+    }
 
     case class DISCONNECTED() extends State {
       queue {
