@@ -139,6 +139,7 @@
     
       function line_chart(node, chart_class) {
 
+        var min_max = node.data("min_max");
         var data_lines = node.data(chart_class + "_data_lines");
         var units = "msg/sec";
         if (! $.isEmptyObject(data_lines)) {
@@ -166,7 +167,7 @@
             axis_color = '#00AA00';
           }
           options.xaxis = { color:  axis_color };
-          options.yaxis = { color:  axis_color };
+          options.yaxis = { color:  axis_color, min:min_max.min, max:min_max.max };
           
           var state = {
              units: units,
@@ -486,6 +487,56 @@
         }
       }
       
+      function set_min_max(benchmark_results) {
+        var min_max = {
+            "min":null,
+            "max":null
+        };
+        for( group_idx in benchmark_results.groups ) {
+          for( scenario_idx in benchmark_results.groups[group_idx].scenarios ) {
+            scenario = benchmark_results.groups[group_idx].scenarios[scenario_idx];
+            function process_scenario_recursively(scenario) {
+              if (scenario.clients) {
+                scenario_node = $("#" + scenario.name);
+                if (scenario_node.length == 1) {
+                  scenario_node.data('min_max', min_max);
+                  function process_data_lines(data_lines) {
+                      for( line_idx in data_lines ) {
+                          var line = data_lines[line_idx];
+                          for( data_idx in line.data ) {
+                              var v = line.data[data_idx][1];
+                              if(min_max.min==null) {
+                                  min_max.min = v
+                                  min_max.max = v
+                              } else {
+                                  min_max.max = Math.max(min_max.max, v)
+                                  min_max.min = Math.min(min_max.min, v)
+                              }
+                          }
+                      }
+                  }
+                  process_data_lines(scenario_node.data('consumers_data_lines'))
+                  process_data_lines(scenario_node.data('producers_data_lines'))
+                }
+              } else {
+                for( s_idx in scenario ) {
+                  process_scenario_recursively(scenario[s_idx]); 
+                }
+              }
+            }
+            process_scenario_recursively(scenario);
+          }
+        }
+        if( min_max.min==null ) {
+            min_max.max = 10;
+            min_max.min = 10;
+        } else {
+            var extra = (min_max.max - min_max.min) * 0.05;
+            min_max.max += extra
+            min_max.min -= extra
+        }
+      }
+      
       function load_information(benchmark_results) {
         var platform_information = $("#platform-information");
         platform_information.empty();
@@ -499,16 +550,16 @@
       function load_charts(platform) {
         // Load the first json file, and use it as a template to create the HTML 
         var first_file = platform + "/" + products[0] + ".json";
+        var template_results;
         $.ajax({ url: first_file, async:false, success: function(data) {
-          var benchmark_results = $.parseJSON( data );
-          
-          load_information(benchmark_results);
+          template_results = $.parseJSON( data );
+          load_information(template_results);
           
           results = $("#results");
           results.empty();
-          var results_legend = benchmark_results["broker_name"];
+          var results_legend = template_results["broker_name"];
           try {
-            create_groups(results, benchmark_results, results_legend);
+            create_groups(results, template_results, results_legend);
           } catch (err) {
             alert(err);
           }
@@ -528,6 +579,8 @@
             add_benchmark_results(benchmark_results, results_legend);
           }});
         }
+        
+        set_min_max(template_results);
         
         // Draw all the scenario charts
         $(".scenario").each(function(i) {  
