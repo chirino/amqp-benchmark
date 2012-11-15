@@ -167,7 +167,13 @@
             axis_color = '#00AA00';
           }
           options.xaxis = { color:  axis_color };
-          options.yaxis = { color:  axis_color, min:min_max.min, max:min_max.max };
+          options.yaxis = { 
+              color:  axis_color, 
+              min:min_max.min, 
+              max:min_max.max,
+              transform: function (v) { return Math.log(v); },
+              inverseTransform: function (v) { return Math.exp(v); }
+          };
           
           var state = {
              units: units,
@@ -529,11 +535,10 @@
         }
         if( min_max.min==null ) {
             min_max.max = 10;
-            min_max.min = 10;
+            min_max.min = 1;
         } else {
             var extra = (min_max.max - min_max.min) * 0.05;
             min_max.max += extra
-            min_max.min -= extra
         }
       }
       
