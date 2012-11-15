@@ -63,7 +63,7 @@ object Benchmark {
   }
 }
 
-@command(scope="amqp", name = "benchmark", description = "The AMQP benchmarking tool")
+@command(scope=">", name = "benchmark", description = "The AMQP benchmarking tool")
 class Benchmark extends Action {
   
   // Helpers needed to differentiate between default value and not set on the CLI value for primitive values
@@ -118,7 +118,7 @@ class Benchmark extends Action {
   var cl_password:String = _
   var password = FlexibleProperty(default = None, high_priority = () => Option(cl_password))
 
-  @argument(index=0, name = "scenario-file", description = "The scenario file used to define the benchmark")
+  @argument(index=0, name = "scenario-file", description = "The scenario file used to define the benchmark", required=true)
   var cl_scenario_file: File = _
   var scenario_file = FlexibleProperty(default = None, high_priority = () => Option(cl_scenario_file))
 
