@@ -46,7 +46,7 @@
         <!-- <value label="Exactly Once">EXACTLY_ONCE</value> -->
       </var>
     </loop>
-    <scenario name="t1_${persistent}_${size}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
+    <scenario name="t1_${persistent}_${size}_${qos}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
       <clients name="clients">
         <message_size>${size}</message_size>
         <persistent>${persistent}</persistent>
