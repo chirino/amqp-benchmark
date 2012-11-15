@@ -22,7 +22,7 @@ function server_start() {
 
   if [ ! -d "${APOLLO_HOME}" ]; then
     cd ${WORKSPACE}
-    wget "$APOLLO_DOWNLOAD" -O "apache-apollo-${APOLLO_VERSION}.tar.gz"
+    wget --no-check-certificate "$APOLLO_DOWNLOAD" -O "apache-apollo-${APOLLO_VERSION}.tar.gz"
     tar -zxvf "apache-apollo-${APOLLO_VERSION}.tar.gz"
     rm -rf "apache-apollo-${APOLLO_VERSION}.tar.gz"
   fi

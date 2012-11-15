@@ -18,7 +18,7 @@ function server_start() {
 
   if [ ! -d "${ACTIVEMQ_HOME}" ]; then
     cd "${WORKSPACE}"
-    wget "$ACTIVEMQ_DOWNLOAD" -O "apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz"
+    wget --no-check-certificate "$ACTIVEMQ_DOWNLOAD" -O "apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz"
     tar -zxvf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
     rm -rf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
   fi  
