@@ -145,7 +145,7 @@ consumer_sleep
 Example:
 
     <scenarios>
-        <broker_name>Test Broker</broker_name>
+        <product_name>Test Server</product_name>
         <description>This is the general description for the scenarios in this file.</description>
         <platform_name>Test Platform</platform_name>
         <platform_desc>Platform description</platform_desc>
@@ -244,8 +244,8 @@ file for more information on how to run a benchmark scenario from the Scala REPL
                     The file to store benchmark metrics in
 
     OPTIONS
-            --broker_name
-                    The name of the broker being benchmarked.
+            --product-name
+                    The name of the product being benchmarked.
             --protocol
                     protocol to use (tcp, ssl, tls, tlsv2, etc.)
             --display-errors

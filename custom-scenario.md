@@ -1,7 +1,7 @@
 # Running a Benchmark Scenario from the Scala REPL
 
 If there is a particular scenario you want to manually execute against the 
-broker, you can do so by starting up the Scala interactive interpreter by
+server, you can do so by starting up the Scala interactive interpreter by
 running `mvn compile scala:console`
 
 Then at the console you execute:

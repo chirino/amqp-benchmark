@@ -1,8 +1,6 @@
 <scenarios>
   
-  <description>Various benchmarking scenarios to stress-test an AMQP broker</description>
-  <platform_name>Platform Name (dummy)</platform_name>
-  <platform_desc>Platform Description (dummy)</platform_desc>
+  <description>The default benchmarking scenarios to stress-test an AMQP server</description>
   <common>
     
     <!-- 

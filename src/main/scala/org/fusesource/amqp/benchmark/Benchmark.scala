@@ -71,9 +71,9 @@ class Benchmark extends Action {
   def toLongOption(x: java.lang.Long): Option[Long] = if(x!=null) Some(x.longValue) else None
   def toBooleanOption(x: java.lang.Boolean): Option[Boolean] = if(x!=null) Some(x.booleanValue) else None
 
-  @option(name = "--broker_name", description = "The name of the broker being benchmarked.")
-  var cl_broker_name:String = _
-  var broker_name = FlexibleProperty(default = None, high_priority = () => Option(cl_broker_name))
+  @option(name = "--product-name", description = "The name of the product being benchmarked.")
+  var cl_product_name:String = _
+  var product_name = FlexibleProperty(default = None, high_priority = () => Option(cl_product_name))
 
   @option(name = "--protocol", description = "protocol to use (tcp, ssl, tls, tlsv2, etc.)")
   var cl_protocol: String = _
@@ -204,7 +204,7 @@ class Benchmark extends Action {
       return null
     }
 
-    broker_name.set_default(out.get.getName.stripSuffix(".json"))
+    product_name.set_default(out.get.getName.stripSuffix(".json"))
     
     // Protect against ctrl-c, write the results we have in any case
     Signal.handle(new Signal("INT"), new SignalHandler () {
@@ -216,7 +216,7 @@ class Benchmark extends Action {
     });
 
     println("===================================================================")
-    println("Benchmarking %s at: %s:%d".format(broker_name.get, host.get, port.get))
+    println("Benchmarking %s at: %s:%d".format(product_name.get, host.get, port.get))
     println("===================================================================")
 
     try {
@@ -664,9 +664,9 @@ class Benchmark extends Action {
     val global_common_xml = scenarios_xml \ "common"
     push_properties(global_common_xml)
     
-    broker_name.push(getStringValue("broker_name", scenarios_xml))
+    product_name.push(getStringValue("product_name", scenarios_xml))
     
-    benchmark_results.broker_name = broker_name.get
+    benchmark_results.product_name = product_name.get
     benchmark_results.description = getStringValue("description", scenarios_xml).getOrElse("").replaceAll("\n", "\\\\n")
     benchmark_results.platform_name = getStringValue("platform_name", scenarios_xml).getOrElse("").replaceAll("\n", "\\\\n")
     benchmark_results.platform_desc = getStringValue("platform_desc", scenarios_xml).getOrElse("").replaceAll("\n", "\\\\n")

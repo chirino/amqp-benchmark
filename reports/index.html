@@ -557,7 +557,7 @@
           
           results = $("#results");
           results.empty();
-          var results_legend = template_results["broker_name"];
+          var results_legend = template_results["product_name"];
           try {
             create_groups(results, template_results, results_legend);
           } catch (err) {
@@ -575,7 +575,7 @@
           var file = platform + "/" + products[i] + ".json";
           $.ajax({ url: file, async:false, success: function(data) {
             var benchmark_results = $.parseJSON( data );
-            var results_legend = benchmark_results["broker_name"];
+            var results_legend = benchmark_results["product_name"];
             add_benchmark_results(benchmark_results, results_legend);
           }});
         }

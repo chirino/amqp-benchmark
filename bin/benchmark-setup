@@ -26,7 +26,7 @@ function install_mvn() {
     fi
     ${M2_HOME}/bin/mvn package
   fi  
-  export BENCHMARK_EXEC="java -jar ${BASEDIR}/target/amqp-benchmark-1.0-SNAPSHOT-standalone.jar"
+  export BENCHMARK_EXEC="java -ea -Xmx1G -jar ${BASEDIR}/target/amqp-benchmark-1.0-SNAPSHOT-standalone.jar"
 }
 
 function server_stop() {
