@@ -169,13 +169,19 @@
       <id>fusesource-public</id>
       <url>http://repo.fusesource.com/nexus/content/groups/public</url>
       <releases><enabled>true</enabled></releases>
-      <snapshots><enabled>fals</enabled></snapshots>
+      <snapshots><enabled>false</enabled></snapshots>
     </repository>  
     <repository>
       <id>fusesource-snapshots</id>
       <url>http://repo.fusesource.com/nexus/content/groups/public-snapshots</url>
       <releases><enabled>false</enabled></releases>
       <snapshots><enabled>true</enabled></snapshots>
+    </repository>  
+    <repository>
+      <id>apache.snapshots</id>
+      <url>https://repository.apache.org/content/repositories/snapshots</url>
+      <snapshots><enabled>true</enabled></snapshots>
+      <releases><enabled>false</enabled></releases>
     </repository>  
   </repositories>
         
