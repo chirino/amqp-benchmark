@@ -20,11 +20,11 @@ package org.fusesource.amqp.benchmark
 import org.fusesource.hawtdispatch._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import org.fusesource.hawtbuf.Buffer._
-import org.apache.activemq.apollo.amqp.hawtdispatch.api._
 import org.apache.qpid.proton.`type`.messaging.{ApplicationProperties, Target, Source}
 import org.apache.qpid.proton.`type`.transport.DeliveryState
 import org.apache.qpid.proton.engine.impl.ProtocolTracer
 import org.apache.qpid.proton.framing.TransportFrame
+import org.apache.qpid.proton.hawtdispatch.api._
 
 object ProtonScenario {
   def main(args: Array[String]) {

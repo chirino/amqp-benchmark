@@ -25,7 +25,6 @@ import java.security.KeyStore
 import java.io.FileInputStream
 import javax.net.ssl._
 import org.fusesource.hawtdispatch.transport.{SslTransport, TcpTransport}
-import org.apache.activemq.apollo.amqp.hawtdispatch.api.QoS
 
 object Scenario {
   val MESSAGE_ID:Array[Byte] = "message-id"

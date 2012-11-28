@@ -31,10 +31,10 @@
   <properties>
 
     <!-- dependency versions -->
+    <proton-version>1.0-SNAPSHOT</proton-version>
     <scala-version>2.8.1</scala-version>
     <karaf-version>2.1.0</karaf-version>
     <maven-scala-plugin-version>2.15.0</maven-scala-plugin-version>
-    <apollo-version>99-trunk-SNAPSHOT</apollo-version>
     <slf4j-version>1.6.0</slf4j-version>
     <maven-assembly-plugin-version>2.2.1</maven-assembly-plugin-version>
     <hawtdispatch-version>1.12</hawtdispatch-version>
@@ -69,15 +69,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.activemq</groupId>
-      <artifactId>apollo-amqp</artifactId>
-      <version>${apollo-version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.activemq</groupId>
-          <artifactId>apollo-broker</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>proton-hawtdispatch</artifactId>
+      <version>${proton-version}</version>
     </dependency>
     
     <dependency>
