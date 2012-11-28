@@ -40,7 +40,7 @@ function server_start() {
 }
 
 function benchmark_run() {
-  $BENCHMARK_EXEC --host $1 ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}-$(date "+%Y-%m-%d").json"
+  $BENCHMARK_EXEC --host $1 --topic-prefix topic:// --queue-prefix queue:// ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}-$(date "+%Y-%m-%d").json"
 }
 
 benchmark_main $*
