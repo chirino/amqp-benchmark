@@ -63,9 +63,10 @@ c1.xlarge instance type.  Once you have the instance started just execute
 the following commands on the instance:
 
     sudo yum install -y screen
-    curl https://nodeload.github.com/chirino/amqp-benchmark/tarball/master | tar -zxv 
-    mv chirino-amqp-benchmark-* amqp-benchmark
-    screen ./amqp-benchmark/bin/benchmark-all
+    curl https://nodeload.github.com/chirino/amqp-benchmark/zip/master > amqp-benchmark.zip
+    jar -xvf amqp-benchmark.zip 
+    chmod a+x ./amqp-benchmark-master/bin/*
+    screen ./amqp-benchmark-master/bin/benchmark-all
 
 The results will be stored in the ~/reports directory.
 
