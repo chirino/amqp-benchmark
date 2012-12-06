@@ -84,6 +84,7 @@ class ProtonScenario extends Scenario {
         val options = new AmqpConnectOptions();
         options.setDispatchQueue(queue)
         options.setHost(host, port)
+        options.setLocalContainerId(name)
         for ( x <- user ) { options.setUser( x )}
         for ( x <- password ) { options.setPassword( x )}
         connection = AmqpConnection.connect(options)
