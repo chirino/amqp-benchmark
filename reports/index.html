@@ -28,12 +28,7 @@
     <script type='text/javascript'>
     
       var products = [];
-      
-      var platforms = [
-        ['test-platform', 'Test Platform'],
-        ['test-platform2', 'Test Plarform 2']
-      ];
-    
+      var platforms = [];
       var legend_update_timeout = null;
       var legend_updates = {};
       function with_commas(nStr)
@@ -556,8 +551,8 @@
         // Load the first json file, and use it as a template to create the HTML 
         var first_file = platform + "/" + products[0] + ".json";
         var template_results;
-        $.ajax({ url: first_file, async:false, success: function(data) {
-          template_results = $.parseJSON( data );
+        $.ajax({ url: first_file, dataType:"json", async:false, success: function(data) {
+          template_results = data;
           load_information(template_results);
           
           results = $("#results");
@@ -578,8 +573,7 @@
         // Load all the other json files
         for (var i = 1; i < products.length; i++) {
           var file = platform + "/" + products[i] + ".json";
-          $.ajax({ url: file, async:false, success: function(data) {
-            var benchmark_results = $.parseJSON( data );
+          $.ajax({ url: file, dataType:"json", async:false, success: function(benchmark_results) {
             var results_legend = benchmark_results["product_name"];
             add_benchmark_results(benchmark_results, results_legend);
           }});
@@ -611,15 +605,13 @@
       
       $(function () {
         // load the names of the platforms and products..
-        $.ajax({ url: "index.json", async:false, success: function(data) {
-          var index_json = $.parseJSON( data );
+        $.ajax({ url: "index.json", async:false, dataType:"json", success: function(index_json) {
           products = index_json["products"];
           platforms = index_json["platforms"];
           for (var i = 0; i < platforms.length; i++) {
             var platform = platforms[i];
             platforms[i] = [platform, platform]
-            $.ajax({ url: platform+"/platform.json", async:false, success: function(data) {
-              var data = $.parseJSON( data );
+            $.ajax({ url: platform+"/platform.json", dataType:"json", async:false, success: function(data) {
               platforms[i] = [platform, data["description"]]
             }});
           }
