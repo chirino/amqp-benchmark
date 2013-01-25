@@ -38,7 +38,7 @@ function server_start() {
         # On a redhat system?
         which yum > /dev/null
         if [ $? -eq 0 ] ; then
-          sudo yum groupinstall "Delvelopment Tools"
+          sudo yum groupinstall "Development Tools"
           sudo yum install boost-devel libuuid-devel
         else 
           # Perhaps we are on a ubuntu system..
