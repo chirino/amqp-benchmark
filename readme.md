@@ -64,7 +64,7 @@ the following commands on the instance:
 
     sudo yum install -y screen
     curl https://nodeload.github.com/chirino/amqp-benchmark/zip/master > amqp-benchmark.zip
-    jar -xvf amqp-benchmark.zip 
+    unzip amqp-benchmark.zip 
     chmod a+x ./amqp-benchmark-master/bin/*
     screen ./amqp-benchmark-master/bin/benchmark-all
 
