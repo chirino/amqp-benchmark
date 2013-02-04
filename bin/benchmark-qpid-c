@@ -44,7 +44,7 @@ function server_start() {
           # Perhaps we are on a ubuntu system..
           which apt-get > /dev/null
           if [ $? -eq 0 ] ; then
-            echo ok  
+            sudo apt-get install build-essential uuid-dev libsasl2-dev sasl2-bin libboost-dev
           fi
         fi
       ;;
