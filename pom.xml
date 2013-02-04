@@ -31,7 +31,7 @@
   <properties>
 
     <!-- dependency versions -->
-    <proton-version>1.0-SNAPSHOT</proton-version>
+    <proton-version>0.3.0-fuse-2</proton-version>
     <scala-version>2.8.1</scala-version>
     <karaf-version>2.1.0</karaf-version>
     <maven-scala-plugin-version>2.15.0</maven-scala-plugin-version>
