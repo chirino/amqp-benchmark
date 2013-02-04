@@ -1,0 +1,188 @@
+#!/bin/bash
+#
+# This shell script automates running the amqp-benchmark [1] against the
+# Apache Qpid project [2].
+#
+# [1]: http://github.com/chirino/amqp-benchmark
+# [2]: http://qpid.apache.org
+#
+
+true \
+${QPID_VERSION:=0.20} \
+${QPID_DOWNLOAD:="http://archive.apache.org/dist/qpid/${QPID_VERSION}/qpid-cpp-${QPID_VERSION}.tar.gz"}
+#"
+
+BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
+. ${BASEDIR}/bin/benchmark-setup
+
+function server_start() {
+  export QPID_SRC="${WORKSPACE}/qpidc-${QPID_VERSION}"
+  export QPID_HOME="${WORKSPACE}/qpidc-${QPID_VERSION}-home"
+  export QPID_WORK="${WORKSPACE}/qpidc-${QPID_VERSION}-work"
+
+  # download the sources..
+  if [ ! -d "${QPID_SRC}" ]; then
+    cd "${WORKSPACE}"
+    wget --no-check-certificate "$QPID_DOWNLOAD" -O "qpid-cpp-${QPID_VERSION}.tar.gz"
+    tar -zxvf qpid-cpp-${QPID_VERSION}.tar.gz
+    rm -rf qpid-cpp-${QPID_VERSION}.tar.gz
+  fi
+
+  # build and install..
+  if [ ! -d "${QPID_HOME}" ]; then
+    cd "${QPID_SRC}"
+    
+    # Install build dependencies..
+    case "`uname`" in
+      Linux*) 
+        # On a redhat system?
+        which yum > /dev/null
+        if [ $? -eq 0 ] ; then
+          sudo yum groupinstall "Delvelopment Tools"
+          sudo yum install boost-devel libuuid-devel
+        else 
+          # Perhaps we are on a ubuntu system..
+          which apt-get > /dev/null
+          if [ $? -eq 0 ] ; then
+            
+          fi
+        fi
+      ;;
+    esac
+    
+    ./configure "--prefix=${QPID_HOME}"
+    make install
+  fi
+  
+  # Cleanup preious executions.
+  server_stop
+  rm -rf ${QPID_WORK}/*
+
+  #
+  # Configuration
+  export QPID_JAVA_MEM="-Xmx4G -Xms1G"
+  mkdir -p ${QPID_WORK}/etc/
+  cat > ${QPID_WORK}/etc/config.xml <<EOF
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<broker>
+    <prefix>${QPID_HOME}</prefix>
+    <work>${QPID_WORK}</work>
+    <conf>${QPID_WORK}/etc</conf>
+
+    <connector>
+        <ssl>
+            <enabled>false</enabled>
+        </ssl>
+        <port>5672</port>
+        <socketReceiveBuffer>262144</socketReceiveBuffer>
+        <socketSendBuffer>262144</socketSendBuffer>
+    </connector>
+
+    <management>
+        <enabled>false</enabled>
+    </management>
+    
+    <advanced>
+        <framesize>65535</framesize>
+        <locale>en_US</locale>	
+    </advanced>
+
+    <security>
+        <pd-auth-manager>
+            <principal-database>
+                <class>org.apache.qpid.server.security.auth.database.PlainPasswordFilePrincipalDatabase</class>
+                <attributes>
+                    <attribute>
+                        <name>passwordFile</name>
+                        <value>${QPID_WORK}/etc/passwd</value>
+                    </attribute>
+                </attributes>
+            </principal-database>
+        </pd-auth-manager>
+        <msg-auth>false</msg-auth>
+    </security>
+    
+    <virtualhosts>${QPID_WORK}/etc/virtualhosts.xml</virtualhosts>
+    
+    <heartbeat>
+        <delay>0</delay>
+        <timeoutFactor>2.0</timeoutFactor>
+    </heartbeat>
+    <queue>
+        <auto_register>true</auto_register>
+    </queue>
+    <status-updates>ON</status-updates>
+
+</broker>
+EOF
+  cat > ${QPID_WORK}/etc/passwd <<EOF
+admin:password
+EOF
+  cat > ${QPID_WORK}/etc/virtualhosts.xml <<EOF
+<virtualhosts>
+    <default>localhost</default>
+    <virtualhost>
+        <name>localhost</name>
+        <localhost>
+        
+          <store>
+            <class>org.apache.qpid.server.store.derby.DerbyMessageStore</class>
+            <environment-path>${QPID_WORK}/derbystore</environment-path>
+            <!--
+            <class>org.apache.qpid.server.store.berkeleydb.BDBMessageStore</class>
+            <environment-path>${QPID_WORK}/bdbstore</environment-path>
+            -->
+          </store>        
+
+            <housekeeping>
+                <threadCount>2</threadCount>
+                <checkPeriod>20000</checkPeriod>
+            </housekeeping>
+
+            <exchanges>
+                <exchange>
+                    <type>direct</type>
+                    <name>test.direct</name>
+                    <durable>true</durable>
+                </exchange>
+                <exchange>
+                    <type>topic</type>
+                    <name>test.topic</name>
+                </exchange>
+            </exchanges>
+            
+            <queues>
+                <exchange>amq.direct</exchange>
+                <maximumQueueDepth>4235264</maximumQueueDepth>
+                <!-- 4Mb -->
+                <maximumMessageSize>2117632</maximumMessageSize>
+                <!-- 2Mb -->
+                <maximumMessageAge>600000</maximumMessageAge>
+                <!-- 10 mins -->
+                <maximumMessageCount>50</maximumMessageCount>
+                <!-- 50 messages -->
+
+                <queue><name>queue</name></queue>
+                <queue><name>ping</name></queue>
+
+            </queues>
+        </localhost>
+    </virtualhost>
+</virtualhosts>
+EOF
+
+  CONSOLE_LOG="${REPORTS_HOME}/qpid-${QPID_VERSION}.log"
+  "${QPID_HOME}/bin/qpid-server" -c "${QPID_WORK}/etc/config.xml" > "${CONSOLE_LOG}" 2>&1 &
+  QPID_PID=$!
+  echo "Started Qpid with PID: ${QPID_PID}"
+  sleep 5
+  cat ${CONSOLE_LOG}
+}
+
+function benchmark_run() {
+  $BENCHMARK_EXEC --display-errors --host $1 --port 5672 --user admin --password password --topic-prefix topic/ --queue-prefix queue/ ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/qpid-${QPID_VERSION}-$(date "+%Y-%m-%d").json"
+}
+
+benchmark_main $*
+
+
