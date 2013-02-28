@@ -27,23 +27,23 @@ function server_start() {
   # build and install..
   if [ ! -f "/usr/sbin/qpidd" ]; then
 
-    # # Install build dependencies..
-    # case "`uname`" in
-    #   Linux*) 
-    #     # On a redhat system?
-    #     which yum > /dev/null
-    #     if [ $? -eq 0 ] ; then
-    #       sudo yum groupinstall "Development Tools"
-    #       sudo yum install boost-devel libuuid-devel
-    #     else 
-    #       # Perhaps we are on a ubuntu system..
-    #       which apt-get > /dev/null
-    #       if [ $? -eq 0 ] ; then
-    #         sudo apt-get install build-essential uuid-dev libsasl2-dev sasl2-bin libboost-dev
-    #       fi
-    #     fi
-    #   ;;
-    # esac
+    # Install build dependencies..
+    case "`uname`" in
+      Linux*) 
+        # On a redhat system?
+        which yum > /dev/null
+        if [ $? -eq 0 ] ; then
+          sudo yum groupinstall "Development Tools"
+          sudo yum install cmake uuid-devel boost-devel libuuid-devel e2fsprogs-devel pkgconfig gcc-c++ make autoconf automake help2man libtool doxygen graphviz ruby
+        else 
+          # Perhaps we are on a ubuntu system..
+          which apt-get > /dev/null
+          if [ $? -eq 0 ] ; then
+            sudo apt-get install build-essential uuid-dev libsasl2-dev sasl2-bin libboost-dev
+          fi
+        fi
+      ;;
+    esac
 
 
     # build and install..
