@@ -86,7 +86,7 @@ function server_start() {
   mkdir -p "${QPID_WORK}/data"
 
   CONSOLE_LOG="${REPORTS_HOME}/qpid-c-${QPID_VERSION}.log"
-  /usr/sbin/qpidd --load-module /lib64/qpid/daemon/amqp.so --data-dir "${QPID_WORK}/data" > "${CONSOLE_LOG}" 2>&1 &
+  /usr/sbin/qpidd --load-module /usr/lib64/qpid/daemon/amqp.so --data-dir "${QPID_WORK}/data" > "${CONSOLE_LOG}" 2>&1 &
   QPID_PID=$!
   echo "Started Qpid with PID: ${QPID_PID}"
   sleep 5
