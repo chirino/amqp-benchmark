@@ -8,50 +8,85 @@
 #
 
 true \
+${PROTON_VERSION:=0.3} \
+${PROTON_DOWNLOAD:="http://archive.apache.org/dist/qpid/proton/${PROTON_VERSION}/qpid-proton-c-${PROTON_VERSION}.tar.gz"} \
 ${QPID_VERSION:=0.20} \
-${QPID_DOWNLOAD:="http://archive.apache.org/dist/qpid/${QPID_VERSION}/qpid-cpp-${QPID_VERSION}.tar.gz"}
+${QPID_DOWNLOAD:="http://archive.apache.org/dist/qpid/${QPID_VERSION}/qpid-cpp-${QPID_VERSION}.tar.gz"} \
+${QPID_TOOLS_DOWNLOAD:="http://archive.apache.org/dist/qpid/${QPID_VERSION}/qpid-tools-${QPID_VERSION}.tar.gz"}
 #"
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
 
 function server_start() {
+  export PROTON_SRC="${WORKSPACE}/qpid-proton-c-${PROTON_VERSION}"
   export QPID_SRC="${WORKSPACE}/qpidc-${QPID_VERSION}"
-  export QPID_HOME="${WORKSPACE}/qpidc-${QPID_VERSION}-home"
+  export QPID_TOOLS_SRC="${WORKSPACE}/qpid-tools-${QPID_VERSION}"
   export QPID_WORK="${WORKSPACE}/qpidc-${QPID_VERSION}-work"
 
-  # download the sources..
-  if [ ! -d "${QPID_SRC}" ]; then
-    cd "${WORKSPACE}"
-    wget --no-check-certificate "$QPID_DOWNLOAD" -O "qpid-cpp-${QPID_VERSION}.tar.gz"
-    tar -zxvf qpid-cpp-${QPID_VERSION}.tar.gz
-    rm -rf qpid-cpp-${QPID_VERSION}.tar.gz
-  fi
-
   # build and install..
-  if [ ! -d "${QPID_HOME}" ]; then
+  if [ ! -f "/usr/sbin/qpidd" ]; then
+
+    # # Install build dependencies..
+    # case "`uname`" in
+    #   Linux*) 
+    #     # On a redhat system?
+    #     which yum > /dev/null
+    #     if [ $? -eq 0 ] ; then
+    #       sudo yum groupinstall "Development Tools"
+    #       sudo yum install boost-devel libuuid-devel
+    #     else 
+    #       # Perhaps we are on a ubuntu system..
+    #       which apt-get > /dev/null
+    #       if [ $? -eq 0 ] ; then
+    #         sudo apt-get install build-essential uuid-dev libsasl2-dev sasl2-bin libboost-dev
+    #       fi
+    #     fi
+    #   ;;
+    # esac
+
+
+    # build and install..
+    if [ ! -f "/usr/include/proton/message.h" ]; then
+
+      # download the sources..
+      if [ ! -d "${PROTON_SRC}" ]; then
+        cd "${WORKSPACE}"
+        wget --no-check-certificate "$PROTON_DOWNLOAD" -O "qpid-proton-c-${PROTON_VERSION}.tar.gz"
+        tar -zxvf qpid-proton-c-${PROTON_VERSION}.tar.gz
+        rm -rf qpid-proton-c-${PROTON_VERSION}.tar.gz
+      fi
+
+
+      cd "${PROTON_SRC}"
+      cmake -DCMAKE_INSTALL_PREFIX="/usr" .
+      sudo make install
+    fi
+
+    if [ ! -d "${QPID_SRC}" ]; then
+      cd "${WORKSPACE}"
+      wget --no-check-certificate "$QPID_DOWNLOAD" -O "qpid-cpp-${QPID_VERSION}.tar.gz"
+      tar -zxvf qpid-cpp-${QPID_VERSION}.tar.gz
+      rm -rf qpid-cpp-${QPID_VERSION}.tar.gz
+    fi
+
     cd "${QPID_SRC}"
     
-    # Install build dependencies..
-    case "`uname`" in
-      Linux*) 
-        # On a redhat system?
-        which yum > /dev/null
-        if [ $? -eq 0 ] ; then
-          sudo yum groupinstall "Development Tools"
-          sudo yum install boost-devel libuuid-devel
-        else 
-          # Perhaps we are on a ubuntu system..
-          which apt-get > /dev/null
-          if [ $? -eq 0 ] ; then
-            sudo apt-get install build-essential uuid-dev libsasl2-dev sasl2-bin libboost-dev
-          fi
-        fi
-      ;;
-    esac
-    
-    ./configure "--prefix=${QPID_HOME}"
-    make install
+    cmake -DCMAKE_INSTALL_PREFIX="/usr" .
+    sudo make install
+  fi
+
+  if [ ! -f "/usr/bin/qpid-tool" ]; then
+
+    if [ ! -d "${QPID_TOOLS_SRC}" ]; then
+      cd "${WORKSPACE}"
+      wget --no-check-certificate "$QPID_TOOLS_DOWNLOAD" -O "qpid-tools-${QPID_VERSION}.tar.gz"
+      tar -zxvf qpid-tools-${QPID_VERSION}.tar.gz
+      rm -rf qpid-tools-${QPID_VERSION}.tar.gz
+    fi
+
+    cd "${QPID_TOOLS_SRC}"    
+    sudo ./setup.py install
   fi
 
   # Cleanup preious executions.
@@ -60,10 +95,14 @@ function server_start() {
   mkdir -p "${QPID_WORK}/data"
 
   CONSOLE_LOG="${REPORTS_HOME}/qpid-c-${QPID_VERSION}.log"
-  "${QPID_HOME}/sbin/qpidd" --data-dir "${QPID_WORK}/data" > "${CONSOLE_LOG}" 2>&1 &
+  /usr/sbin/qpidd --load-module /lib64/qpid/daemon/amqp.so --data-dir "${QPID_WORK}/data" > "${CONSOLE_LOG}" 2>&1 &
   QPID_PID=$!
   echo "Started Qpid with PID: ${QPID_PID}"
   sleep 5
+  for (( i=0; i < 10 ; i++)) ; do
+    /usr/bin/qpid-config add queue queue/loadq-$i
+  done
+
   cat ${CONSOLE_LOG}
 }
 

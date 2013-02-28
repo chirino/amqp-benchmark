@@ -135,6 +135,8 @@ trait Scenario {
   var queue_prefix = "/queue/"
   var topic_prefix = "/topic/"
   var name = "custom"
+  var queue_suffix = ""
+  var topic_suffix = ""
 
   var drain_timeout = 2000L
 
@@ -328,8 +330,8 @@ trait Scenario {
   }
 
   protected def destination(i:Int) = destination_type match {
-    case "queue" => queue_prefix+destination_name+"-"+(i%destination_count)
-    case "topic" => topic_prefix+destination_name+"-"+(i%destination_count)
+    case "queue" => queue_prefix+destination_name+"-"+(i%destination_count)+queue_suffix
+    case "topic" => topic_prefix+destination_name+"-"+(i%destination_count)+topic_suffix
     case "raw_queue" => destination_name
     case "raw_topic" => destination_name
     case _ => throw new Exception("Unsuported destination type: "+destination_type)
