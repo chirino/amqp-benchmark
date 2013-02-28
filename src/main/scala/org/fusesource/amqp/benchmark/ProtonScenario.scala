@@ -148,7 +148,7 @@ class ProtonScenario extends Scenario {
       }
 
       def on_failure(e:Throwable) = {
-        if( display_errors ) {
+        if( state == this && display_errors ) {
           e.printStackTrace
         }
         error_counter.incrementAndGet
@@ -170,7 +170,7 @@ class ProtonScenario extends Scenario {
       }
 
       def on_failure(e:Throwable) = {
-        if( display_errors ) {
+        if( state == this && display_errors ) {
           e.printStackTrace
         }
         error_counter.incrementAndGet
@@ -362,7 +362,9 @@ class ProtonScenario extends Scenario {
         val md = sender.send(message)
         md.onSettle(new Callback[DeliveryState] {
           def onFailure(value: Throwable) {
-            value.printStackTrace()
+            if( display_errors ) {
+              value.printStackTrace()
+            }
             close
           }
           def onSuccess(value: DeliveryState) {
