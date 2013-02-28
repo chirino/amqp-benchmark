@@ -61,9 +61,12 @@ function server_start() {
 
     if [ ! -d "${QPID_SRC}" ]; then
       cd "${WORKSPACE}"
+      mkdir temp
+      cd temp
       wget --no-check-certificate "$QPID_DOWNLOAD" -O "qpid-cpp-${QPID_VERSION}.zip"
       unzip qpid-cpp-${QPID_VERSION}.zip
       rm -rf qpid-cpp-${QPID_VERSION}.zip
+      mv qpid-* ${QPID_SRC}
     fi
 
     cd "${QPID_SRC}/qpid/cpp"
