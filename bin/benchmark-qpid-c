@@ -11,8 +11,7 @@ true \
 ${PROTON_VERSION:=0.3} \
 ${PROTON_DOWNLOAD:="http://archive.apache.org/dist/qpid/proton/${PROTON_VERSION}/qpid-proton-c-${PROTON_VERSION}.tar.gz"} \
 ${QPID_VERSION:=0.20} \
-${QPID_DOWNLOAD:="http://archive.apache.org/dist/qpid/${QPID_VERSION}/qpid-cpp-${QPID_VERSION}.tar.gz"} \
-${QPID_TOOLS_DOWNLOAD:="http://archive.apache.org/dist/qpid/${QPID_VERSION}/qpid-tools-${QPID_VERSION}.tar.gz"}
+${QPID_DOWNLOAD:="https://github.com/apache/qpid/archive/${QPID_VERSION}.zip"} \
 #"
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
@@ -33,8 +32,8 @@ function server_start() {
         # On a redhat system?
         which yum > /dev/null
         if [ $? -eq 0 ] ; then
-          sudo yum groupinstall "Development Tools"
-          sudo yum install cmake uuid-devel boost-devel libuuid-devel e2fsprogs-devel pkgconfig gcc-c++ make autoconf automake help2man libtool doxygen graphviz ruby
+          sudo yum groupinstall -y "Development Tools"
+          sudo yum install -y cmake uuid-devel boost-devel libuuid-devel e2fsprogs-devel pkgconfig gcc-c++ make autoconf automake help2man libtool doxygen graphviz ruby
         else 
           # Perhaps we are on a ubuntu system..
           which apt-get > /dev/null
@@ -45,10 +44,8 @@ function server_start() {
       ;;
     esac
 
-
-    # build and install..
+    # build and install proton..
     if [ ! -f "/usr/include/proton/message.h" ]; then
-
       # download the sources..
       if [ ! -d "${PROTON_SRC}" ]; then
         cd "${WORKSPACE}"
@@ -57,7 +54,6 @@ function server_start() {
         rm -rf qpid-proton-c-${PROTON_VERSION}.tar.gz
       fi
 
-
       cd "${PROTON_SRC}"
       cmake -DCMAKE_INSTALL_PREFIX="/usr" .
       sudo make install
@@ -65,28 +61,20 @@ function server_start() {
 
     if [ ! -d "${QPID_SRC}" ]; then
       cd "${WORKSPACE}"
-      wget --no-check-certificate "$QPID_DOWNLOAD" -O "qpid-cpp-${QPID_VERSION}.tar.gz"
-      tar -zxvf qpid-cpp-${QPID_VERSION}.tar.gz
-      rm -rf qpid-cpp-${QPID_VERSION}.tar.gz
+      wget --no-check-certificate "$QPID_DOWNLOAD" -O "qpid-cpp-${QPID_VERSION}.zip"
+      unzip qpid-cpp-${QPID_VERSION}.zip
+      rm -rf qpid-cpp-${QPID_VERSION}.zip
     fi
 
-    cd "${QPID_SRC}"
-    
+    cd "${QPID_SRC}/qpid/cpp"
     cmake -DCMAKE_INSTALL_PREFIX="/usr" .
     sudo make install
-  fi
 
-  if [ ! -f "/usr/bin/qpid-tool" ]; then
-
-    if [ ! -d "${QPID_TOOLS_SRC}" ]; then
-      cd "${WORKSPACE}"
-      wget --no-check-certificate "$QPID_TOOLS_DOWNLOAD" -O "qpid-tools-${QPID_VERSION}.tar.gz"
-      tar -zxvf qpid-tools-${QPID_VERSION}.tar.gz
-      rm -rf qpid-tools-${QPID_VERSION}.tar.gz
-    fi
-
-    cd "${QPID_TOOLS_SRC}"    
-    sudo ./setup.py install
+    cd "${QPID_SRC}/qpid/python"
+    sudo python setup.py install
+    
+    cd "${QPID_SRC}/qpid/tools"
+    sudo python setup.py install
   fi
 
   # Cleanup preious executions.
