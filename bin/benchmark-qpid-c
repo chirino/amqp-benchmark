@@ -91,15 +91,15 @@ function server_start() {
   echo "Started Qpid with PID: ${QPID_PID}"
   sleep 5
   for (( i=0; i < 10 ; i++)) ; do
-    /usr/bin/qpid-config add queue queue/loadq-$i
-    /usr/bin/qpid-config add exchange fanout topic/loadt-$i
+    /usr/bin/qpid-config add queue /queue/loadq-$i
+    /usr/bin/qpid-config add exchange fanout /topic/loadt-$i
   done
 
   cat ${CONSOLE_LOG}
 }
 
 function benchmark_run() {
-  $BENCHMARK_EXEC --display-errors --host $1 --port 5672 --topic-prefix amq.topic/ --queue-prefix queue/ ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/qpid-c-${QPID_VERSION}-$(date "+%Y-%m-%d").json"
+  $BENCHMARK_EXEC --display-errors --host $1 --port 5672 ${BASEDIR}/scenarios.xml "${REPORTS_HOME}/qpid-c-${QPID_VERSION}-$(date "+%Y-%m-%d").json"
 }
 
 benchmark_main $*
