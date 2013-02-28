@@ -44,7 +44,7 @@
         <!-- <value label="Exactly Once">EXACTLY_ONCE</value> -->
       </var>
     </loop>
-    <scenario name="t1_${persistent}_${size}_${qos}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
+    <scenario name="q1_${persistent}_${size}_${qos}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
       <clients name="clients">
         <message_size>${size}</message_size>
         <persistent>${persistent}</persistent>
@@ -54,4 +54,40 @@
     </scenario>
   </group>
 
+
+  <!-- ======================================================================= -->
+  <!--  Topic Tests  -->
+  <!-- ======================================================================= -->
+  <group name="Topic Throughput">
+    <description>
+      1 producer and 1 consumer connected to a topic.
+    </description>
+    <common>
+      <destination_type>topic</destination_type>
+    </common>
+    <loop>
+      <var name="persistent" label="Message Persistence">
+        <value label="Persistent">true</value>
+        <value label="Non-Persistent">false</value>
+      </var>
+      <var name="size" label="Message Size">
+        <value label="20 Bytes">20</value>
+        <value label="1k">1024</value>
+        <!-- <value label="100k">102400</value> -->
+      </var>
+      <var name="qos" label="Delivery QoS">
+        <value label="At Most Once">AT_MOST_ONCE</value>
+        <value label="At Least Once">AT_LEAST_ONCE</value>
+        <!-- <value label="Exactly Once">EXACTLY_ONCE</value> -->
+      </var>
+    </loop>
+    <scenario name="t1_${persistent}_${size}_${qos}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
+      <clients name="clients">
+        <message_size>${size}</message_size>
+        <persistent>${persistent}</persistent>
+        <producer_qos>${qos}</producer_qos>
+        <consumer_qos>${qos}</consumer_qos>
+      </clients>
+    </scenario>
+  </group>
 </scenarios>
