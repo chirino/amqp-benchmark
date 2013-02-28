@@ -101,6 +101,7 @@ function server_start() {
   sleep 5
   for (( i=0; i < 10 ; i++)) ; do
     /usr/bin/qpid-config add queue queue/loadq-$i
+    /usr/bin/qpid-config add exchange fanout topic/loadt-$i
   done
 
   cat ${CONSOLE_LOG}
