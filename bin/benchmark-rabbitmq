@@ -7,7 +7,7 @@
 # [2]: http://www.rabbitmq.com/
 #
 true \
-${RABBITMQ_VERSION:=2.8.5} \
+${RABBITMQ_VERSION:=0.0.0} \
 ${RABBITMQ_DOWNLOAD:="http://www.rabbitmq.com/releases/rabbitmq-server/v${RABBITMQ_VERSION}/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
@@ -49,9 +49,35 @@ function server_start() {
   #
   if [ ! -d "${RABBITMQ_HOME}" ]; then
     cd ${WORKSPACE}
-    wget "$RABBITMQ_DOWNLOAD"
-    tar -zxvf rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz
-    rm -rf rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz
+    
+    #wget "$RABBITMQ_DOWNLOAD"
+    #tar -zxvf rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz
+    #rm -rf rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz
+    
+    if [ ! -d "${WORKSPACE}/rabbitmq-public-umbrella" ]; then
+      hg clone http://hg.rabbitmq.com/rabbitmq-public-umbrella
+      cd rabbitmq-public-umbrella
+      make up
+      cd rabbitmq-server/
+      hg up bug23749
+      cd ../rabbitmq-codegen/
+      hg up bug23749
+      cd ..
+      hg clone http://hg.rabbitmq.com/rabbitmq-amqp1.0
+    fi
+
+    cd "${WORKSPACE}/rabbitmq-public-umbrella"
+    cd rabbitmq-server
+    make srcdist
+    cd packaging/generic-unix
+    make
+
+    cd "${WORKSPACE}/rabbitmq-public-umbrella/rabbitmq-amqp1.0"
+    make
+    
+    cd ${WORKSPACE}
+    tar -zxvf "${WORKSPACE}/rabbitmq-public-umbrella/rabbitmq-server/packaging/generic-unix/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz"
+    cp rabbitmq-public-umbrella/rabbitmq-amqp1.0/dist/*.ez ${RABBITMQ_HOME}/plugins
   fi
 
   mkdir -p "${RABBITMQ_BASE}"
