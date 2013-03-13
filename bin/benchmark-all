@@ -6,7 +6,7 @@ BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 export SKIP_REPORT="true"
 "${BASEDIR}/bin/benchmark-activemq-snapshot" $*
 "${BASEDIR}/bin/benchmark-apollo-snapshot" $*
-#"${BASEDIR}/bin/benchmark-hornetq" $*
-#"${BASEDIR}/bin/benchmark-rabbitmq" $*
+"${BASEDIR}/bin/benchmark-qpid-c" $*
+"${BASEDIR}/bin/benchmark-rabbitmq" $*
 export SKIP_REPORT=
 "${BASEDIR}/bin/benchmark-report" $*
