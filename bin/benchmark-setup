@@ -24,6 +24,7 @@ function install_mvn() {
       chmod a+x "${M2_HOME}/bin/mvn"
       cd -
     fi
+    cd ${BASEDIR}
     ${M2_HOME}/bin/mvn package
   fi  
   export BENCHMARK_EXEC="java -ea -Xmx1G -jar ${BASEDIR}/target/amqp-benchmark-1.0-SNAPSHOT-standalone.jar"
