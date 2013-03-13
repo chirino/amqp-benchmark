@@ -62,10 +62,8 @@ If you want to run the benchmark on EC2, we recommend using at least the
 c1.xlarge instance type.  Once you have the instance started just execute
 the following commands on the instance:
 
-    sudo yum install -y screen
-    curl -L https://nodeload.github.com/chirino/amqp-benchmark/zip/master > amqp-benchmark.zip
-    unzip amqp-benchmark.zip 
-    chmod a+x ./amqp-benchmark-master/bin/*
+    sudo yum install -y screen git erlang xmlto hg make
+    git clone https://github.com/chirino/amqp-benchmark.git
     screen ./amqp-benchmark-master/bin/benchmark-all
 
 The results will be stored in the ~/reports directory.
