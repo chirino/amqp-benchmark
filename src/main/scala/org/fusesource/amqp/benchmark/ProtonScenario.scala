@@ -149,6 +149,7 @@ class ProtonScenario extends Scenario {
 
       def on_failure(e:Throwable) = {
         if( state == this && display_errors ) {
+          println("Connecting Error:")
           e.printStackTrace
         }
         error_counter.incrementAndGet
@@ -171,6 +172,7 @@ class ProtonScenario extends Scenario {
 
       def on_failure(e:Throwable) = {
         if( state == this && display_errors ) {
+          println("Connected error:")
           e.printStackTrace
         }
         error_counter.incrementAndGet
@@ -363,6 +365,7 @@ class ProtonScenario extends Scenario {
         md.onSettle(new Callback[DeliveryState] {
           def onFailure(value: Throwable) {
             if( display_errors ) {
+              println("Send Error:")
               value.printStackTrace()
             }
             close
