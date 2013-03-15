@@ -10,13 +10,46 @@
     <passcode>password</passcode> 
     -->
 
-    <sample_count>5</sample_count>
+    <sample_count>15</sample_count>
     <sample_interval>1000</sample_interval>
-    <warm_up_count>1</warm_up_count>
+    <warm_up_count>3</warm_up_count>
     <destinations>1</destinations>
     <producers>1</producers>
     <consumers>1</consumers>
   </common>
+  
+  <!-- ======================================================================= -->
+  <!--  1 producer to a topic  -->
+  <!-- ======================================================================= -->
+  <group name="Throughput to an Unsubscribed Topic">
+    <description>
+      A single producer sending non-persistent messages to a topic that does not have an consumers attached.
+    </description>
+    <common>
+      <destination_type>topic</destination_type>
+      <consumers>1</consumers>
+    </common>
+    <loop>
+      <var name="size" label="Message Size">
+        <value label="20 Bytes">20</value>
+        <value label="1k">1024</value>
+        <!-- <value label="100k">102400</value> -->
+      </var>
+      <var name="qos" label="Delivery QoS">
+        <value label="At Most Once">AT_MOST_ONCE</value>
+        <value label="At Least Once">AT_LEAST_ONCE</value>
+        <!-- <value label="Exactly Once">EXACTLY_ONCE</value> -->
+      </var>
+    </loop>
+    <scenario name="throughput_to_unsubscribed_topic_${size}_${qos}" label="size: ${size}, qos: ${qos}">
+      <clients name="clients">
+        <persistent>false</persistent>
+        <message_size>${size}</message_size>
+        <producer_qos>${qos}</producer_qos>
+        <consumer_qos>${qos}</consumer_qos>
+      </clients>
+    </scenario>
+  </group>
   
   <!-- ======================================================================= -->
   <!--  Queue Tests  -->
@@ -90,4 +123,154 @@
       </clients>
     </scenario>
   </group>
+  
+  
+  <!-- ======================================================================= -->
+  <!--  Reliable Queue Scale Out  -->
+  <!-- ======================================================================= -->
+  <group name="Reliable Queue Fan In/Out Load Scenarios">
+    <description>
+      Multiple consumers and producers communicate via one shared Queue. 
+      All messages sent have a 20 byte payload.
+      All messages are sent reliably by marking them persistent and 
+      and using at least once semantics when sending over the messaging links.
+    </description>
+    <common>
+      <destination_type>queue</destination_type>
+    </common>
+    <loop>
+      <var name="consumers" label="Consumers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+      <var name="producers" label="Producers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+    </loop>
+    <scenario name="reliable_q_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
+      <clients name="clients">
+        <producers>${producers}</producers>
+        <consumers>${consumers}</consumers>
+        <message_size>20</message_size>
+        <persistent>true</persistent>
+        <producer_qos>AT_LEAST_ONCE</producer_qos>
+        <consumer_qos>AT_LEAST_ONCE</consumer_qos>
+      </clients>
+    </scenario>
+  </group>
+
+  <!-- ======================================================================= -->
+  <!--  Reliable Topic Scale Out  -->
+  <!-- ======================================================================= -->
+    <group name="Reliable Topic Scale Out">
+    <description>
+      Multiple consumers and producers communicate via one shared Topic. 
+      All messages sent have a 20 byte payload.
+      All messages are sent reliably by marking them persistent and 
+      and using at least once semantics when sending over the messaging links.
+    </description>
+    <common>
+      <destination_type>topic</destination_type>
+    </common>
+    <loop>
+      <var name="consumers" label="Consumers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+      <var name="producers" label="Producers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+    </loop>
+    <scenario name="reliable_t_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
+      <clients name="clients">
+        <producers>${producers}</producers>
+        <consumers>${consumers}</consumers>
+        <message_size>20</message_size>
+        <persistent>true</persistent>
+        <producer_qos>AT_LEAST_ONCE</producer_qos>
+        <consumer_qos>AT_LEAST_ONCE</consumer_qos>
+      </clients>
+    </scenario>
+  </group>
+  
+  <!-- ======================================================================= -->
+  <!--  Un-Reliable Queue Scale Out  -->
+  <!-- ======================================================================= -->
+  <group name="Un-reliable Queue Scale Out">
+    <description>
+      Multiple consumers and producers communicate via one shared Queue. 
+      All messages sent have a 20 byte payload.
+      All messages are sent unreliably by marking them non-persistent and 
+      and using at most once semantics when sending over the messaging links.
+    </description>
+    <common>
+      <destination_type>queue</destination_type>
+    </common>
+    <loop>
+      <var name="consumers" label="Consumers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+      <var name="producers" label="Producers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+    </loop>
+    <scenario name="unreliable_q_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
+      <clients name="clients">
+        <producers>${producers}</producers>
+        <consumers>${consumers}</consumers>
+        <message_size>20</message_size>
+        <persistent>false</persistent>
+        <producer_qos>AT_MOST_ONCE</producer_qos>
+        <consumer_qos>AT_MOST_ONCE</consumer_qos>
+      </clients>
+    </scenario>
+  </group>
+
+  <!-- ======================================================================= -->
+  <!--  Un-reliable Topic Scale Out  -->
+  <!-- ======================================================================= -->
+    <group name="Unreliable Topic Scale Out">
+    <description>
+      Multiple consumers and producers communicate via one shared Topic. 
+      All messages sent have a 20 byte payload.
+      All messages are sent unreliably by marking them non-persistent and 
+      and using at most once semantics when sending over the messaging links.
+    </description>
+    <common>
+      <destination_type>topic</destination_type>
+    </common>
+    <loop>
+      <var name="consumers" label="Consumers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+      <var name="producers" label="Producers">
+        <value>1</value>
+        <value>5</value>
+        <value>10</value>
+      </var>
+    </loop>
+    <scenario name="unreliable_t_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
+      <clients name="clients">
+        <producers>${producers}</producers>
+        <consumers>${consumers}</consumers>
+        <message_size>20</message_size>
+        <persistent>false</persistent>
+        <producer_qos>AT_MOST_ONCE</producer_qos>
+        <consumer_qos>AT_MOST_ONCE</consumer_qos>
+      </clients>
+    </scenario>
+  </group>
+  
 </scenarios>
