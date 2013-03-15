@@ -25,10 +25,6 @@
     <description>
       A single producer sending non-persistent messages to a topic that does not have an consumers attached.
     </description>
-    <common>
-      <destination_type>topic</destination_type>
-      <consumers>0</consumers>
-    </common>
     <loop>
       <var name="size" label="Message Size">
         <value label="20 Bytes">20</value>
@@ -43,6 +39,8 @@
     </loop>
     <scenario name="throughput_to_unsubscribed_topic_${size}_${qos}" label="size: ${size}, qos: ${qos}">
       <clients name="clients">
+        <destination_type>topic</destination_type>
+        <consumers>0</consumers>
         <persistent>false</persistent>
         <message_size>${size}</message_size>
         <producer_qos>${qos}</producer_qos>
@@ -58,9 +56,6 @@
     <description>
       1 producer and 1 consumer connected to a queue.
     </description>
-    <common>
-      <destination_type>queue</destination_type>
-    </common>
     <loop>
       <var name="persistent" label="Message Persistence">
         <value label="Persistent">true</value>
@@ -79,6 +74,7 @@
     </loop>
     <scenario name="q1_${persistent}_${size}_${qos}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
       <clients name="clients">
+        <destination_type>queue</destination_type>
         <message_size>${size}</message_size>
         <persistent>${persistent}</persistent>
         <producer_qos>${qos}</producer_qos>
@@ -95,9 +91,6 @@
     <description>
       1 producer and 1 consumer connected to a topic.
     </description>
-    <common>
-      <destination_type>topic</destination_type>
-    </common>
     <loop>
       <var name="persistent" label="Message Persistence">
         <value label="Persistent">true</value>
@@ -116,6 +109,7 @@
     </loop>
     <scenario name="t1_${persistent}_${size}_${qos}" label="persistent: ${persistent}, size: ${size}, qos: ${qos}">
       <clients name="clients">
+        <destination_type>topic</destination_type>
         <message_size>${size}</message_size>
         <persistent>${persistent}</persistent>
         <producer_qos>${qos}</producer_qos>
@@ -135,9 +129,6 @@
       All messages are sent reliably by marking them persistent and 
       and using at least once semantics when sending over the messaging links.
     </description>
-    <common>
-      <destination_type>queue</destination_type>
-    </common>
     <loop>
       <var name="consumers" label="Consumers">
         <value>1</value>
@@ -152,6 +143,7 @@
     </loop>
     <scenario name="reliable_q_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
       <clients name="clients">
+        <destination_type>queue</destination_type>
         <producers>${producers}</producers>
         <consumers>${consumers}</consumers>
         <message_size>20</message_size>
@@ -172,9 +164,6 @@
       All messages are sent reliably by marking them persistent and 
       and using at least once semantics when sending over the messaging links.
     </description>
-    <common>
-      <destination_type>topic</destination_type>
-    </common>
     <loop>
       <var name="consumers" label="Consumers">
         <value>1</value>
@@ -189,6 +178,7 @@
     </loop>
     <scenario name="reliable_t_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
       <clients name="clients">
+        <destination_type>topic</destination_type>
         <producers>${producers}</producers>
         <consumers>${consumers}</consumers>
         <message_size>20</message_size>
@@ -209,9 +199,6 @@
       All messages are sent unreliably by marking them non-persistent and 
       and using at most once semantics when sending over the messaging links.
     </description>
-    <common>
-      <destination_type>queue</destination_type>
-    </common>
     <loop>
       <var name="consumers" label="Consumers">
         <value>1</value>
@@ -226,6 +213,7 @@
     </loop>
     <scenario name="unreliable_q_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
       <clients name="clients">
+        <destination_type>queue</destination_type>
         <producers>${producers}</producers>
         <consumers>${consumers}</consumers>
         <message_size>20</message_size>
@@ -246,9 +234,6 @@
       All messages are sent unreliably by marking them non-persistent and 
       and using at most once semantics when sending over the messaging links.
     </description>
-    <common>
-      <destination_type>topic</destination_type>
-    </common>
     <loop>
       <var name="consumers" label="Consumers">
         <value>1</value>
@@ -263,6 +248,7 @@
     </loop>
     <scenario name="unreliable_t_scale_out_p${producers}_c${consumers}" label="producers: ${producers}, consumer: ${consumers}">
       <clients name="clients">
+        <destination_type>topic</destination_type>
         <producers>${producers}</producers>
         <consumers>${consumers}</consumers>
         <message_size>20</message_size>
