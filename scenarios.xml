@@ -27,7 +27,7 @@
     </description>
     <common>
       <destination_type>topic</destination_type>
-      <consumers>1</consumers>
+      <consumers>0</consumers>
     </common>
     <loop>
       <var name="size" label="Message Size">
