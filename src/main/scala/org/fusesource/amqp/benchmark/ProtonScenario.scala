@@ -33,8 +33,8 @@ object ProtonScenario {
     scenario.host = "localhost"
     scenario.port = 61613
     scenario.display_errors = true
-//    scenario.login = Some("admin")
-//    scenario.passcode = Some("password")
+//    scenario.user = Some("guest")
+//    scenario.password = Some("guest")
     scenario.destination_type = "queue";
     scenario.producer_qos = "AT_MOST_ONCE"
     scenario.consumer_qos = "AT_MOST_ONCE"
@@ -182,6 +182,17 @@ class ProtonScenario extends Scenario {
 
     }
     case class CLOSING() extends State  {
+
+      // Force a disconnect if the graceful close does not work..
+      queue.after(5, TimeUnit.SECONDS) {
+        if( state eq this ) {
+          if ( display_errors ) {
+            println("Graceful disconnect took too long, closing socket.")
+          }
+          connection.disconnect()
+        }
+      }
+
       connection.onDisconnected(new Callback[Void] {
         def onFailure(value: Throwable) { onSuccess(null) }
         def onSuccess(value: Void) {
